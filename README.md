@@ -305,6 +305,7 @@ $ make check          # gofmt, vet, -race tests and the README examples (each ag
 $ make spec           # the TLA+ model (spec/Pipe.tla), its witnesses and mutants
 $ make spec-traces    # every session end of the tests checked against the model
 $ make release-dryrun # the release files in dist/, built twice and compared, signed with a throwaway key
+$ make reliability    # the reliability matrix (Linux, docker): docs/reliability.md
 ```
 
 A release is `make release`, `make release-sign` (the key in

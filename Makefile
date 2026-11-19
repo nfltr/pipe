@@ -7,7 +7,7 @@
 # pipetrace, each session end's trace checked against the model with TLC,
 # and the mutant traces rejected (spec/README.md "Traces"). All run in CI,
 # and the tests on Windows too.
-.PHONY: ci check spec spec-traces release release-sign release-verify release-dryrun
+.PHONY: ci check spec spec-traces release release-sign release-verify release-dryrun reliability
 # make ci: the check workflow's Linux jobs, for a CI runner of our own.
 ci: check spec spec-traces release-dryrun
 
@@ -42,3 +42,13 @@ release-verify:
 	sh scripts/release.sh verify
 release-dryrun:
 	sh scripts/release.sh dryrun
+
+# make reliability: the reliability matrix (bench/rel/README.md; results in
+# docs/reliability.md) on a Linux machine with docker: every cell REL_N
+# times (default 3), nfltr-pipe built from this checkout, nfltr and
+# nfltr-relay $(NFLTR_VERSION) from the installer, or REL_BIN=<dir> with all
+# three. Exit 0 only when every session passed.
+NFLTR_VERSION ?= v2.1.73
+export NFLTR_VERSION
+reliability:
+	sh bench/rel/run.sh
