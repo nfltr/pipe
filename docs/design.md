@@ -22,8 +22,9 @@ Each end runs two copies and nothing else (`run`, `up`, `down` in
   and handed every byte of its own and the half close to the transport.
 - **Anything else resets** the session (`Reset`) and exits non-zero: a
   failed read of stdin, a failed write of stdout (`| head` closing early:
-  SIGPIPE is ignored so this is a write error, not death), SIGINT or
-  SIGTERM, or a session the SDK reports cut. The other side reads a reset,
+  SIGPIPE is ignored so this is a write error, not death), SIGINT,
+  SIGTERM or SIGHUP (ssh hangs up its ProxyCommand as it closes), or a
+  session the SDK reports cut. The other side reads a reset,
   never an end, so it never takes a cut stream for a whole one; stdout is
   left open on a failure (a Read after this end's own Reset reads as an
   end and must not close it).

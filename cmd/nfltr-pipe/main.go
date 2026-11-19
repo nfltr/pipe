@@ -86,7 +86,9 @@ func cli(args []string) int {
 	// session, not death by SIGPIPE, which would leave the other end
 	// waiting for the SDK's liveness to notice.
 	signal.Ignore(syscall.SIGPIPE)
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	// A hangup is a stop too (ssh sends one to its ProxyCommand when it
+	// closes): untyped death would leave the other end to the liveness.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer stop()
 	switch args[0] {
 	case "listen":

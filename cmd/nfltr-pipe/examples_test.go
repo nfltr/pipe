@@ -79,6 +79,11 @@ type example struct {
 	check     func(t *testing.T, h hosts, out map[string]string)
 }
 
+// sshCodes: ssh hangs up its ProxyCommand as it closes, which resets the
+// session unless it finished first: the server's end exits 6 or 0
+// (TestHangupResets: at once).
+var sshCodes = [2]int{-1, 0}
+
 // hosts are the example's machines' home directories, by name.
 type hosts map[string]string
 
@@ -98,12 +103,14 @@ var examples = map[string]example{
 	},
 	"ssh": {
 		needs: []string{"/usr/sbin/sshd", "ssh", "ssh-keygen", "mkfifo"},
+		codes: sshCodes,
 		setup: func(t *testing.T, h hosts) { sshSetup(t, h["server"], h["laptop"]) },
 		stdin: "echo $((6*7))\n",
 		check: func(t *testing.T, _ hosts, out map[string]string) { contains(t, out["laptop"], "42") },
 	},
 	"rsync": {
 		needs: []string{"/usr/sbin/sshd", "ssh", "ssh-keygen", "mkfifo", "rsync"},
+		codes: sshCodes,
 		setup: func(t *testing.T, h hosts) { sshSetup(t, h["server"], h["laptop"]); tree(t, h["laptop"]+"/project") },
 		check: func(t *testing.T, h hosts, _ map[string]string) {
 			sameTree(t, h["laptop"]+"/project", h["server"]+"/project")

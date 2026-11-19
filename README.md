@@ -156,8 +156,10 @@ laptop$ ssh -o ProxyCommand='nfltr-pipe dial --address-file ~/.ssh/server.addr' 
 ```
 
 ssh still checks the server's host key and authenticates as usual; the
-pipe only carries its connection. Anything that runs over ssh works the
-same way, such as rsync:
+pipe only carries its connection. ssh stops its ProxyCommand with a
+hangup as it closes, which resets the session: the server's `nfltr-pipe`
+exits 6 then, unless the session had already finished (0). Anything
+that runs over ssh works the same way, such as rsync:
 
 <!-- example: rsync -->
 ```console
@@ -292,7 +294,7 @@ On macOS, which has no `sha256sum`, check the sum with `shasum -a 256 -c` instea
 
 ```console
 $ go build ./cmd/nfltr-pipe
-$ make check          # gofmt, vet, -race tests (each against a relay core run in the test)
+$ make check          # gofmt, vet, -race tests and the README examples (each against a relay core run in the test)
 $ make spec           # the TLA+ model (spec/Pipe.tla), its witnesses and mutants
 $ make spec-traces    # every session end of the tests checked against the model
 $ make release-dryrun # the release files in dist/, built twice and compared, signed with a throwaway key
