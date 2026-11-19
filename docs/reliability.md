@@ -123,6 +123,16 @@ resets the listener in 1 s (3/3, was 31 s). What remains is defect 1
 (2 sessions: 10 and 1000 Mbit/s, 150 ms, 1 % loss, direct) and defect 3
 (2 of 3 second dials exited 10).
 
+## On the r24 modules, 2026-11-19 (a subset)
+
+nfltr-pipe at `c175d56` (relay client v0.23.7, link v0.12.17; defect 2's
+fix is not in v0.23.7) with nfltr and nfltr-relay v2.1.73, linux/arm64 in
+docker on a Mac, not the CI machine: the cells without impairment only
+(stream sizes, half closes, kills and stops at 50 %, one session, no
+account), 1 run each, 41 sessions, 3.5 minutes. 40 passed, corrupted 0;
+the one failure is defect 3 (`one-session-direct`, the second dial exited
+10).
+
 ## Defects found
 
 Each was found by this matrix and belongs to the relay SDK, not to
