@@ -36,8 +36,16 @@ model in [`spec/`](spec/README.md).
 
 ## Examples
 
+Each example below runs in this repository's tests as written, both ends
+on one machine (`cmd/nfltr-pipe/examples_test.go`). `addr` is a file
+holding the listener's address, readable by its owner only (see
+[Pass the address safely](#pass-the-address-safely)).
+
+### Files
+
 Copy a directory:
 
+<!-- example: copy-dir -->
 ```console
 src$ tar -C ~/project -cf - . | nfltr-pipe listen
 dst$ nfltr-pipe dial --address-file addr | tar -C ~/project -xf -
@@ -48,23 +56,143 @@ only after the sender's last byte and its end arrived. A transfer that
 fails part way exits non-zero on both sides, and tar sees a truncated
 archive, not a complete one.
 
+Compress on the way (worth it on a slow link; the stream is encrypted, so
+compress before it, not after):
+
+<!-- example: zstd -->
+```console
+src$ tar -C ~/project -cf - . | zstd | nfltr-pipe listen
+dst$ nfltr-pipe dial --address-file addr | zstd -d | tar -C ~/project -xf -
+```
+
+A disk or file image, with progress and rate on the sending side:
+
+<!-- example: image -->
+```console
+src$ pv disk.img | nfltr-pipe listen
+dst$ nfltr-pipe dial --address-file addr | dd of=disk.img bs=4M
+```
+
+Reading or writing a device instead (`pv /dev/sdb`, `dd of=/dev/sdb`)
+needs root on that side.
+
+### Databases and images
+
+Dump a database straight into a restore, with no dump file on either
+side:
+
+<!-- example: sqlite -->
+```console
+src$ sqlite3 app.db .dump | nfltr-pipe listen
+dst$ nfltr-pipe dial --address-file addr | sqlite3 app.db
+```
+
+The same shape works for any dump and restore pair that reads and writes
+a stream, such as `pg_dump` and `psql`.
+
+Move a container image between machines without a registry:
+
+<!-- example: docker -->
+```console
+src$ docker save myapp:1.4 | nfltr-pipe listen
+dst$ nfltr-pipe dial --address-file addr | docker load
+```
+
+### Commands
+
 Follow a log on another machine:
 
+<!-- example: follow-log -->
 ```console
-server$ tail -F /var/log/app.log | nfltr-pipe listen
+server$ tail -F app.log | nfltr-pipe listen
 laptop$ nfltr-pipe dial --address-file addr | grep --line-buffered ERROR
 ```
 
 Stopping the reader (Ctrl-C) resets the session; the server's
 `nfltr-pipe` exits 6.
 
+Run commands on the listening machine and read their output (a shell for
+whoever holds the address, for one session):
+
+<!-- example: commands -->
+```console
+server$ mkfifo cmd.in; sh <cmd.in 2>&1 | nfltr-pipe listen >cmd.in
+laptop$ printf 'uname -s\ndf -h .\n' | nfltr-pipe dial --address-file addr
+```
+
+`sh` runs what the dialler sends and exits at its end, which ends the
+session; the dialler prints the output and exits 0.
+
+Reach a TCP service on the listening machine, for one connection:
+
+<!-- example: tcp-forward -->
+```console
+server$ socat EXEC:'nfltr-pipe listen' TCP:127.0.0.1:8080
+laptop$ printf 'GET / HTTP/1.0\r\n\r\n' | nfltr-pipe dial --address-file addr
+```
+
+socat joins the listener's stdin and stdout to a connection to the
+service; the dialler's stdin and stdout are the client's side of it.
+
+Copy text from one machine's clipboard to another's (macOS `pbpaste` and
+`pbcopy`; on Linux `xclip -o` and `xclip -i`, or `wl-paste` and
+`wl-copy`):
+
+<!-- example: clipboard -->
+```console
+a$ pbpaste | nfltr-pipe listen
+b$ nfltr-pipe dial --address-file addr | xclip -selection clipboard -i
+```
+
+### ssh
+
 ssh to a machine through a listener in front of its sshd (one ssh
 session per address: run the listener again for the next one):
 
+<!-- example: ssh -->
 ```console
-server$ mkfifo /tmp/sshd.in; sudo /usr/sbin/sshd -i </tmp/sshd.in | nfltr-pipe listen >/tmp/sshd.in
-laptop$ ssh -o ProxyCommand='nfltr-pipe dial --address-file ~/.ssh/server.addr' user@server
+server$ mkfifo sshd.in; sudo /usr/sbin/sshd -i <sshd.in | nfltr-pipe listen >sshd.in
+laptop$ ssh -o ProxyCommand='nfltr-pipe dial --address-file ~/.ssh/server.addr' server
 ```
+
+ssh still checks the server's host key and authenticates as usual; the
+pipe only carries its connection. Anything that runs over ssh works the
+same way, such as rsync:
+
+<!-- example: rsync -->
+```console
+server$ mkfifo sshd.in; sudo /usr/sbin/sshd -i <sshd.in | nfltr-pipe listen >sshd.in
+laptop$ rsync -a -e "ssh -o ProxyCommand='nfltr-pipe dial --address-file ~/.ssh/server.addr'" ~/project/ server:project/
+```
+
+### Scripts
+
+Branch on the exit code: retry when the relay or the listener was not
+reached in time (5), discard a copy that was cut (6):
+
+<!-- example: exit-codes -->
+```console
+src$ nfltr-pipe listen < backup.tar
+dst$ for try in 1 2 3; do
+       nfltr-pipe dial --address-file addr > backup.tar; code=$?
+       [ $code -eq 5 ] || break; sleep 10
+     done
+dst$ case $code in 0) echo complete ;; 6) rm backup.tar; echo cut ;; *) echo "failed: $code" ;; esac
+```
+
+### Pass the address safely
+
+Paste the address into a file only you can read, so it never shows on a
+command line or in shell history:
+
+<!-- example: address-file -->
+```console
+src$ nfltr-pipe listen < backup.tar
+dst$ umask 077; cat > addr    # paste the address, Enter, then Ctrl-D
+dst$ nfltr-pipe dial --address-file addr > backup.tar
+```
+
+`dial` refuses an address file that others can read.
 
 ## Address
 

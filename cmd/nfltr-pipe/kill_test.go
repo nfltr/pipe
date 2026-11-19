@@ -19,9 +19,20 @@ import (
 
 // TestMain runs the test binary as one end of a pipe when PIPE_CHILD says
 // which (listen or dial), on its own stdin and stdout, against the relay
-// PIPE_GRPC/PIPE_PROXY names: a peer a test can kill -9.
+// PIPE_GRPC/PIPE_PROXY names: a peer a test can kill -9. PIPE_CHILD=cli:
+// the command line nfltr-pipe, its relay that one (the README examples).
 func TestMain(m *testing.M) {
 	switch os.Getenv("PIPE_CHILD") {
+	case "cli":
+		viaRelay = func(c nfnet.Config) nfnet.Config {
+			proxy := os.Getenv("PIPE_PROXY")
+			c.Relay, c.AgentRelay, c.RelayTLS, c.Plaintext = "relay.test", os.Getenv("PIPE_GRPC"), nil, true
+			c.DialRelay = func(ctx context.Context, _ string) (net.Conn, error) {
+				return (&net.Dialer{}).DialContext(ctx, "tcp", proxy)
+			}
+			return c
+		}
+		os.Exit(cli(os.Args[1:]))
 	case "listen":
 		cfg := nfnet.Config{Relay: "relay.test", AgentRelay: os.Getenv("PIPE_GRPC"), Plaintext: true, Token: os.Getenv("PIPE_KEY")}
 		os.Exit(listen(context.Background(), cfg, nfnet.DirectOn, cfg.Token == "", osStdio()))

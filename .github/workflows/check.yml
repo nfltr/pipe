@@ -22,7 +22,12 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
+      # The README examples' commands (examples_test.go); with
+      # PIPE_EXAMPLES_ALL a missing one fails instead of skipping.
+      - run: sudo apt-get update -q && sudo apt-get install -yq pv socat sqlite3 zstd rsync openssh-server
       - run: make check
+        env:
+          PIPE_EXAMPLES_ALL: "1"
   windows:
     runs-on: windows-latest
     timeout-minutes: 15

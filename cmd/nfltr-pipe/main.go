@@ -73,10 +73,14 @@ Exit status (the relay SDK's table):
 Flags:
 `
 
-func main() {
-	if len(os.Args) < 2 {
+func main() { os.Exit(cli(os.Args[1:])) }
+
+// cli runs one command line (args without the program's name) and
+// returns its exit status.
+func cli(args []string) int {
+	if len(args) < 1 {
 		fmt.Fprint(os.Stderr, usage)
-		os.Exit(1)
+		return 1
 	}
 	// A stdout closed early (| head) is a write error that resets the
 	// session, not death by SIGPIPE, which would leave the other end
@@ -84,20 +88,22 @@ func main() {
 	signal.Ignore(syscall.SIGPIPE)
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	var code int
-	switch os.Args[1] {
+	switch args[0] {
 	case "listen":
-		code = listenCmd(ctx, os.Args[2:])
+		return listenCmd(ctx, args[1:])
 	case "dial":
-		code = dialCmd(ctx, os.Args[2:])
+		return dialCmd(ctx, args[1:])
 	case "-h", "--help", "help":
 		fmt.Fprint(os.Stdout, usage)
-	default:
-		fmt.Fprintf(os.Stderr, "nfltr-pipe: unknown command %q\n\n%s", os.Args[1], usage)
-		code = 1
+		return 0
 	}
-	os.Exit(code)
+	fmt.Fprintf(os.Stderr, "nfltr-pipe: unknown command %q\n\n%s", args[0], usage)
+	return 1
 }
+
+// viaRelay is the relay configuration the commands end with: as given,
+// except in the README examples' test, whose relay runs in the test.
+var viaRelay = func(c nfnet.Config) nfnet.Config { return c }
 
 // common are both commands' relay flags.
 type common struct {
@@ -176,7 +182,7 @@ func listenCmd(ctx context.Context, args []string) int {
 		return fail(os.Stderr, 1, err)
 	}
 	cfg.Logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
-	return listen(ctx, cfg, mode, m == nil, osStdio())
+	return listen(ctx, viaRelay(cfg), mode, m == nil, osStdio())
 }
 
 // listen serves one session under a fresh address, printed on sio.log
@@ -257,7 +263,7 @@ func dialCmd(ctx context.Context, args []string) int {
 		return fail(os.Stderr, 1, err)
 	}
 	cfg.Relay = t.Address.Relay // --relay-pin verifies the address's relay
-	return dial(ctx, cfg, t, mode, osStdio())
+	return dial(ctx, viaRelay(cfg), t, mode, osStdio())
 }
 
 // openBound bounds the dial's open: with direct paths past the SDK's
