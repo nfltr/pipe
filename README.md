@@ -276,8 +276,9 @@ relayed.
 
 Release binaries (linux, darwin, windows; amd64, arm64) are on
 [Releases](https://github.com/nfltr/pipe/releases), each checked against
-its signed `SHA256SUMS` and the release key in
-[`release/allowed_signers`](release/allowed_signers) (`ssh-keygen` from
+its signed `SHA256SUMS` and nfltr-pipe's own release key in
+[`release/allowed_signers`](release/allowed_signers), Ed25519
+`SHA256:f6CMaXVMYmUA1RGI6EmJ/0SNrAWN8xS7UQgCiXdwkaM` (`ssh-keygen` from
 OpenSSH 8.1 or later):
 
 ```console
@@ -300,7 +301,8 @@ $ make spec-traces    # every session end of the tests checked against the model
 $ make release-dryrun # the release files in dist/, built twice and compared, signed with a throwaway key
 ```
 
-A release is `make release`, `make release-sign SIGNING_KEY=<key>`,
+A release is `make release`, `make release-sign` (the key in
+`~/.config/nfltr-pipe/release-signing-key`, or `SIGNING_KEY=<key>`),
 `make release-verify` (against `release/allowed_signers`) on a clean
 checkout of its tag, then the files in `dist/` attached to the tag's
 GitHub release.

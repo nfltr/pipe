@@ -28,8 +28,9 @@ spec-traces:
 	TLA_JAVA=$$(echo "$$t" | sed -n 1p) TLA_JAR=$$(echo "$$t" | sed -n 2p) sh spec/traces.sh
 
 # Release files in dist/ (scripts/release.sh): make release builds the six
-# binaries and SHA256SUMS, reproducibly; make release-sign SIGNING_KEY=<key>
-# signs SHA256SUMS (SHA256SUMS.sshsig); make release-verify checks both
+# binaries and SHA256SUMS, reproducibly; make release-sign signs SHA256SUMS
+# (SHA256SUMS.sshsig) with pipe's key, ~/.config/nfltr-pipe/release-signing-key
+# or SIGNING_KEY=<key>; make release-verify checks both
 # against release/allowed_signers; make release-dryrun builds twice,
 # compares, and signs and verifies with a throwaway key. Tags and GitHub
 # releases are made by hand from a verified dist/.

@@ -6,7 +6,8 @@
 #   build   the binaries for linux, darwin, windows x amd64, arm64 and
 #           SHA256SUMS; reproducible: the same commit builds the same bytes
 #   sign    SHA256SUMS.sshsig: SHA256SUMS signed with $SIGNING_KEY (an
-#           OpenSSH key file, or its .pub with the key in ssh-agent)
+#           OpenSSH key file, or its .pub with the key in ssh-agent;
+#           default ~/.config/nfltr-pipe/release-signing-key, pipe's own)
 #   verify  SHA256SUMS.sshsig against release/allowed_signers, then every
 #           file against SHA256SUMS
 #   dryrun  build twice and compare, sign with a throwaway key, verify
@@ -41,7 +42,7 @@ verify() { # verify <dir> <allowed_signers>
 
 case ${1:-} in
 build) build dist ;;
-sign) sign dist "${SIGNING_KEY:?set SIGNING_KEY to the release key file}" ;;
+sign) sign dist "${SIGNING_KEY:-$HOME/.config/nfltr-pipe/release-signing-key}" ;;
 verify) verify dist release/allowed_signers ;;
 dryrun)
 	tmp=$(mktemp -d)
