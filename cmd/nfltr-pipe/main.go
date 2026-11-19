@@ -110,14 +110,24 @@ var viaRelay = func(c nfnet.Config) nfnet.Config { return c }
 // common are both commands' relay flags.
 type common struct {
 	relay, relayHTTP, pin, direct *string
+	saved                         savedRelay
 }
 
+// addCommon adds the relay flags. The relay is --relay, else
+// $NFLTR_PIPE_RELAY, else the one `nfltr config set-relay` saved (with its
+// HTTPS URL and certificate pin), else grpc.nfltr.xyz:443.
 func addCommon(fs *flag.FlagSet) common {
+	saved := loadSavedRelay()
+	relay := defaultRelay
+	if saved.Server != "" {
+		relay = saved.Server
+	}
 	return common{
-		relay:     fs.String("relay", env("NFLTR_PIPE_RELAY", "grpc.nfltr.xyz:443"), "relay agent-link `address` (listen); $NFLTR_PIPE_RELAY"),
-		relayHTTP: fs.String("relay-http", "", "relay HTTP `address` the address names; default: --relay without its grpc. prefix and port 443"),
-		pin:       fs.String("relay-pin", os.Getenv(relaytrust.PinEnv), "accept the relay certificate with this SHA-256 `fingerprint` (a private relay's); $"+relaytrust.PinEnv),
+		relay:     fs.String("relay", env("NFLTR_PIPE_RELAY", relay), "relay agent-link `address` (listen); $NFLTR_PIPE_RELAY, else the relay nfltr config set-relay saved"),
+		relayHTTP: fs.String("relay-http", "", "relay HTTP `address` the address names; default: the saved relay's --proxy-url host with the saved relay, else --relay without its grpc. prefix and port 443"),
+		pin:       fs.String("relay-pin", env(relaytrust.PinEnv, saved.Pin), "accept the relay certificate with this SHA-256 `fingerprint` (a private relay's); $"+relaytrust.PinEnv+", else the saved relay's"),
 		direct:    fs.String("direct", "on", "direct paths: `mode` on (LAN first, then the lowest round trip) or off (relayed only)"),
+		saved:     saved,
 	}
 }
 
@@ -132,6 +142,9 @@ func (c common) config() (nfnet.Config, nfnet.DirectMode, error) {
 		}
 	}
 	http := *c.relayHTTP
+	if http == "" && *c.relay == c.saved.Server {
+		http = c.saved.httpHost()
+	}
 	if http == "" {
 		http = strings.TrimPrefix(*c.relay, "grpc.")
 	}
@@ -203,7 +216,7 @@ func listen(ctx context.Context, cfg nfnet.Config, mode nfnet.DirectMode, anon b
 	}
 	ln, err := nfnet.Listen(ctx, cfg, "pipe", nfnet.ListenOptions{Address: l, Direct: mode})
 	if err != nil {
-		return fail(sio.log, codeOr(err, nfnet.CodeUnreachable), enrolHint(err, anon))
+		return fail(sio.log, codeOr(err, nfnet.CodeUnreachable), relayHint(enrolHint(err, anon), cfg.AgentRelay))
 	}
 	// Close resets a session still open and returns once the agent
 	// stopped: the process may exit only then.
@@ -460,6 +473,12 @@ func enrolHint(err error, anon bool) error {
 		return fmt.Errorf("%w; run `nfltr config login` to enrol this machine again", err)
 	}
 	return err
+}
+
+// relayHint names the relay a connection was for and the flag that names
+// another.
+func relayHint(err error, relay string) error {
+	return fmt.Errorf("relay %s (--relay names another): %w", relay, err)
 }
 
 func env(k, def string) string {

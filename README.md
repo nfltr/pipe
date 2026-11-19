@@ -231,9 +231,12 @@ nfltr-pipe listen [--relay host:port] [--relay-http host] [--relay-pin sha256] [
 nfltr-pipe dial [--relay-pin sha256] [--direct on|off] <address> | --address-file <file>
 ```
 
-`--relay` (default `grpc.nfltr.xyz:443`, `$NFLTR_PIPE_RELAY`) is the
-relay the listener registers at; the address names it, so `dial` needs no
-relay flag. `--relay-pin` (`$NFLTR_RELAY_PIN`) accepts a private relay's
+`--relay` is the relay the listener registers at: `--relay`, else
+`$NFLTR_PIPE_RELAY`, else the one `nfltr config set-relay` saved (with its
+HTTPS URL and certificate pin; nothing of an account is read), else
+`grpc.nfltr.xyz:443`; an error connecting names the relay and `--relay`.
+The address names it, so `dial` needs no relay flag. `--relay-pin`
+(`$NFLTR_RELAY_PIN`, else the saved relay's) accepts a private relay's
 certificate by its SHA-256 fingerprint. `--direct off` keeps the session
 relayed.
 
@@ -286,8 +289,11 @@ $ v=<version>; f=nfltr-pipe_linux_amd64
 $ for x in $f SHA256SUMS SHA256SUMS.sshsig; do curl -fsSLO https://github.com/nfltr/pipe/releases/download/$v/$x; done
 $ curl -fsSLO https://raw.githubusercontent.com/nfltr/pipe/main/release/allowed_signers
 $ ssh-keygen -Y verify -f allowed_signers -I nfltr-release -n nfltr-release -s SHA256SUMS.sshsig < SHA256SUMS
-$ grep " $f\$" SHA256SUMS | sha256sum -c && chmod +x $f && mv $f ~/bin/nfltr-pipe
+$ grep " $f\$" SHA256SUMS | sha256sum -c && mkdir -p ~/.local/bin && install -m 755 $f ~/.local/bin/nfltr-pipe
 ```
+
+`~/.local/bin` is where nfltr's installer puts `nfltr`; add it to `PATH` if
+it is not there yet.
 
 On macOS, which has no `sha256sum`, check the sum with `shasum -a 256 -c` instead.
 

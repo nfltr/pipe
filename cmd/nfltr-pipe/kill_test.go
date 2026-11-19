@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -51,6 +52,8 @@ func TestMain(m *testing.M) {
 		}
 		os.Exit(dial(context.Background(), cfg, t, mode, osStdio()))
 	}
+	// No test reads this machine's nfltr config (its saved relay).
+	_ = os.Setenv("NFLTR_CONFIG", filepath.Join(os.TempDir(), "nfltr-pipe-test-no-config", "nfltr.json"))
 	os.Exit(m.Run())
 }
 
