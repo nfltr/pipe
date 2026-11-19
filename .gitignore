@@ -1,0 +1,5 @@
+/nfltr-pipe
+spec/*_TTrace_*
+spec/states/
+spec/traces/*.out
+/dist/
