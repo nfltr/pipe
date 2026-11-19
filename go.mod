@@ -4,7 +4,7 @@ go 1.27.2
 
 require (
 	github.com/nfltr/relay-core v0.16.4
-	github.com/nfltr/relay/client v0.23.6-0.20261119071755-aa74c3ac7fba
+	github.com/nfltr/relay/client v0.23.6
 	github.com/spf13/viper v1.21.0
 )
 
