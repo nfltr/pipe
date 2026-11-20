@@ -192,6 +192,28 @@ nfltr-pipe: none is worked around here.
    `REL_CELLS='^one-session-direct$' REL_N=10`. Open: on the r25 modules
    4 of 4 runs on a Mac (above).
 
+4. **Relayed, an end exits 0 while its peer holds a prefix** (relay
+   client `nfnet`, lane SENDONCE: send's defect 3, the same assumption).
+   A relayed `Close` returns once the session's frames are written to the
+   relay, not once the peer took them (`nfnet.Conn.Close` promises the
+   peer's acknowledgement on a direct path only). When the peer's link
+   drops after the relay took the last bytes and stays down past the
+   liveness, the relay resets the peer's session with them: the end that
+   sent them exits 0, its peer exits 6 with a right prefix. Nothing is
+   taken for whole (the peer's 6 says the stream was cut), but the
+   sender's 0 claims more than happened, against "Ends that tell" in the
+   README and `CleanExit` in `spec/Pipe.tla`, whose session is end to end.
+   The matrix does not reach it: its drops come at 30 %. Reproducer
+   `TestRelayedEndDropAfterLastByte` (branch `SENDONCE-defect4`): 4 MiB
+   from the listener, the dialler's link silenced at the listener's stdin
+   end; on the r25 modules the listener exits 0 and the dialler 6 with
+   4,014,080 of 4,194,304 bytes. nfltr-send is not affected: its receiver
+   takes the sender's own clean end as its word, not its Close. Open: the
+   fix is a relayed Close that waits for the far end's acknowledgement,
+   as the direct path's does, a wire change through the relay (link
+   chaining) that needs its design and TLA+ first; nfltr-pipe adds no
+   protocol of its own to work around it.
+
 The matrix also found that a direct session's Close returned nil when the
 peer had not acknowledged the END (the session failed first): fixed in
 the relay client with defect 2 (`TestPSConnCloseReportsAnUnackedEnd`);
