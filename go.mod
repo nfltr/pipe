@@ -51,3 +51,15 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/nfltr/link => github.com/nfltr/link v0.13.1-0.20261120181205-cc4f08cfe4cf
+
+replace github.com/nfltr/link/pathswitch => github.com/nfltr/link/pathswitch v0.1.1-0.20261120181205-cc4f08cfe4cf
+
+replace github.com/nfltr/link/peerlink/quiclink => github.com/nfltr/link/peerlink/quiclink v0.6.1-0.20261120181205-cc4f08cfe4cf
+
+replace github.com/nfltr/relay/client => github.com/nfltr/relay/client v0.23.13-0.20261120184638-01c7df751f4d
+
+replace github.com/nfltr/relay/proto => github.com/nfltr/relay/proto v0.21.6-0.20261120184638-01c7df751f4d
+
+replace github.com/nfltr/relay-core => github.com/nfltr/relay-core v0.17.1-0.20261120164725-4bee3c62f828
