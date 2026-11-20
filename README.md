@@ -241,8 +241,9 @@ nfltr-pipe version
 `$NFLTR_PIPE_RELAY`, else the one `nfltr config set-relay` saved (with its
 HTTPS URL and certificate pin; nothing of an account is read), else
 `grpc.nfltr.xyz:443`; an error connecting names the relay and `--relay`.
-The address names it, so `dial` takes no relay: `--relay`, `--relay-http`
-or `$NFLTR_PIPE_RELAY` set is a usage error. `--relay-cert-sha256`
+The address names it, so `dial` takes no relay flag: `--relay` or
+`--relay-http` is a usage error, and `$NFLTR_PIPE_RELAY` (listen's) is
+ignored. `--relay-cert-sha256`
 (`$NFLTR_RELAY_CERT_SHA256`, else the saved relay's) accepts a private relay's
 certificate by its SHA-256 fingerprint. `--direct off` keeps the session
 relayed (`on` and `off` only). `<command> -h` exits 0; `nfltr-pipe

@@ -11,8 +11,9 @@ import (
 	"testing"
 )
 
-// dial refuses a relay (the address names its relay) as a usage error,
-// never ignores it; --direct takes on or off only; -h exits 0.
+// dial refuses a relay flag (the address names its relay) as a usage
+// error, never ignores it, and ignores $NFLTR_PIPE_RELAY (listen's, set
+// in a profile); --direct takes on or off only; -h exits 0.
 func TestDialRefusesARelayAndDirectIsOnOrOff(t *testing.T) {
 	const addr = "nf1aaaa"
 	for name, c := range map[string]struct {
@@ -23,7 +24,7 @@ func TestDialRefusesARelayAndDirectIsOnOrOff(t *testing.T) {
 		"--relay":            {"", []string{"dial", "--relay", "x:443", addr}, "takes no --relay"},
 		"--relay=":           {"", []string{"dial", "--relay=x:443", addr}, "takes no --relay"},
 		"--relay-http":       {"", []string{"dial", "--relay-http", "x", addr}, "takes no --relay-http"},
-		"$NFLTR_PIPE_RELAY":  {"x:443", []string{"dial", addr}, "$NFLTR_PIPE_RELAY is set"},
+		"$NFLTR_PIPE_RELAY":  {"x:443", []string{"dial", addr}, "want an nf1... address"}, // ignored: on to the address
 		"--direct true":      {"", []string{"dial", "--direct", "true", addr}, `--direct "true": want on or off`},
 		"listen --direct=":   {"", []string{"listen", "--direct="}, `--direct "": want on or off`},
 		"--relay-pin (gone)": {"", []string{"dial", "--relay-pin", "00", addr}, "not defined: -relay-pin"},

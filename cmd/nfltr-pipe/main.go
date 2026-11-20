@@ -318,9 +318,6 @@ func dialCmd(ctx context.Context, args []string) int {
 	if help {
 		return 0
 	}
-	if err == nil && os.Getenv("NFLTR_PIPE_RELAY") != "" {
-		err = errors.New("dial: $NFLTR_PIPE_RELAY is set: the address names its relay; unset it for dial")
-	}
 	if err != nil {
 		return fail(os.Stderr, 1, err)
 	}

@@ -39,14 +39,16 @@ machine (`ps`); on a shared machine pass it with `--address-file`.
 | `--address-file <file\|->` | dial | none | read the address from this file (refused when others may read it, except on Windows), or `-`: stdin's first line, instead of the argument |
 
 Flags are Go `flag` syntax: `-flag value`, `--flag value`, `--flag=value`.
-dial takes no relay: `--relay`, `--relay-http` or `$NFLTR_PIPE_RELAY` set
-is a usage error (exit 1), since the address names its relay.
+dial takes no relay flag: `--relay` or `--relay-http` is a usage error
+(exit 1), since the address names its relay. It ignores
+`$NFLTR_PIPE_RELAY`: the address names its relay; the variable applies to
+listen only.
 
 ## Environment
 
 | variable | read by | meaning |
 |---|---|---|
-| `$NFLTR_PIPE_RELAY` | listen, dial | listen: `--relay`'s default; dial refuses it set |
+| `$NFLTR_PIPE_RELAY` | listen | `--relay`'s default; dial ignores it (the address names its relay; the variable applies to listen only) |
 | `$NFLTR_RELAY_CERT_SHA256` | listen, dial | `--relay-cert-sha256`'s default (the relay SDK's name, shared with nfltr) |
 | `$NFLTR_CONFIG` | listen, dial | the nfltr config file (default `~/.config/nfltr/nfltr.json`): its saved relay (`server`, `proxy_url`, `relay_cert_sha256`; nothing of an account), and the directory of `machine.json` |
 
