@@ -133,6 +133,29 @@ account), 1 run each, 41 sessions, 3.5 minutes. 40 passed, corrupted 0;
 the one failure is defect 3 (`one-session-direct`, the second dial exited
 10).
 
+## On the r25 modules, 2026-11-20 (a subset, on a Mac)
+
+nfltr-pipe at `6600813` (relay client v0.23.8, link v0.12.18, relay-core
+v0.16.7) with nfltr and nfltr-relay v2.1.73, linux/arm64 in docker on a
+Mac, not the CI machine (pipe is not one of its repositories yet): the
+r24 subset plus `reader-closes-*`, 1 run each; the lossy direct cells of
+defect 1 (`net-100mbit-*-loss1-direct`, `net-1000mbit-*-loss1-direct` at
+40 and 150 ms) 3 runs each and `net-100mbit-150ms-loss1-direct` 5 more;
+`one-session-direct` 3 more. 68 sessions: 63 passed, corrupted 0.
+
+- **Defect 1 is gone**: 16 of 17 lossy direct sessions passed, and none
+  ended with one end 0 and the other 6 (the baseline had 3 of 6 at
+  100 Mbit/s and 2 of 2 at 1000 Mbit/s). The one failure ran while the
+  Mac was in dark wake (the docker VM stalled): both ends exited 6 after
+  275 s, the dialler's close saying `the peer did not acknowledge the
+  stream's end`, a short but right prefix at the listener. The cell's 5
+  runs with the Mac awake all passed (2.3 to 7.6 Mbit/s, median 2.8).
+- **Defect 2 is fixed**: a dialler whose stdout closed after 1 MiB reset
+  the listener in 1.2 s direct, 1.0 s relayed.
+- **Defect 3 remains**: 4 of 4 `one-session-direct` runs failed; the
+  second dial exited 10 within 0.01 s, the first session completed.
+- The account-less dial without UDP exits 12 at 57 s (5 of 5).
+
 ## Defects found
 
 Each was found by this matrix and belongs to the relay SDK, not to
@@ -144,18 +167,15 @@ nfltr-pipe: none is worked around here.
    6 baseline sessions at 100 Mbit/s, 2 of 2 at 1000 Mbit/s in the first
    run) the listener exited 0 and the dialler exited 6 with a right but
    short stream (as little as 1.3 of 4 MiB): `session reset: pathswitch:
-   session reset`. A pathswitch end acknowledges bytes once it holds them,
-   before its reader reads them, and its Read reports a reset before the
-   bytes it holds. The likely path: the listener's Close returned clean
-   (every byte and its END acknowledged), and its agent's stop at its exit
-   reset the session before Close's background clean end had run, an ABORT
-   that link's model allows only while the direction is not clean
-   (`spec/DirectPath.tla` `AbortBy`: `~Clean`; the code's `abort` has no
-   such guard, and the model's receiver delivers what it acknowledges). Reproducer:
-   `REL_CELLS='^net-100mbit-150ms-loss1-direct$' REL_N=10`; in-process,
-   an `Abort` right after a successful `psConn.Close` loses every byte the
-   peer had not yet read (the relay client's `agent` package, 0 of 262,144
-   bytes read). Open.
+   session reset`. A pathswitch end acknowledged bytes once it held them,
+   before its reader read them, and its Read reported a reset before the
+   bytes it held; the listener's agent reset the session at its exit
+   right after a clean Close. Fixed in link v0.12.18 (`pathswitch`, lane
+   DIRECTCLOSE): bytes an end took stay readable after a reset, an abort
+   of a session clean at its end is the clean end, and Close waits for the
+   peer's acknowledgement as long as the peer answers (it reset a lossy
+   session still delivering its tail after 30 s), 5 s once the peer is
+   silent. The r25 subset above: 0 of 17 lossy direct sessions.
 2. **A reset on a direct-path session that is still relayed reaches the
    peer only at its detach bound** (relay client `agent`, `psConn.Reset`):
    the dialler's stdout failed after 1 MiB, it reset and exited at once,
@@ -163,12 +183,14 @@ nfltr-pipe: none is worked around here.
    ABORT and returned; the process exited before it was written, and the
    peer read the stream's end as a lost path. Fixed in the relay client
    (`land/PIPEMATRIX`, `TestPSConnResetReachesAPeerBeforeExit`): Reset
-   returns once the peer has the ABORT, at most 2 s.
+   returns once the peer has the ABORT, at most 2 s; released in relay
+   client v0.23.8 (the r25 subset: the listener exits in 1.2 s).
 3. **A second dial during the session exits 10, not 6** (relay client
    nf1): 1 of 3 direct runs read `the server refused this address's
    secret` (`e2ee_client_refused`) where the README's table and "a second
    dial of the same address is reset" say 6. Reproducer:
-   `REL_CELLS='^one-session-direct$' REL_N=10`. Open.
+   `REL_CELLS='^one-session-direct$' REL_N=10`. Open: on the r25 modules
+   4 of 4 runs on a Mac (above).
 
 The matrix also found that a direct session's Close returned nil when the
 peer had not acknowledged the END (the session failed first): fixed in
