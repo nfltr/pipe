@@ -156,6 +156,17 @@ defect 1 (`net-100mbit-*-loss1-direct`, `net-1000mbit-*-loss1-direct` at
   second dial exited 10 within 0.01 s, the first session completed.
 - The account-less dial without UDP exits 12 at 57 s (5 of 5).
 
+## On the r27 modules, 2026-11-20 (the CI machine)
+
+nfltr-pipe at `ffebd5b` (link v0.12.20, relay client v0.23.10, relay-core
+v0.16.9) with nfltr and nfltr-relay v2.1.73, on the CI machine of the
+baseline (`make reliability`, a box run): 101 cells, 3 runs each, 303
+sessions, 44 minutes. **303 of 303 passed, corrupted 0.** Defect 3 is
+gone: 3 of 3 `one-session-direct` runs passed (and 3 of 3 relayed). The
+same matrix on the r26 modules (link v0.12.19, relay client v0.23.9)
+also passed 303 of 303. Defect 4 is outside the matrix (its drops come
+at 30 %); `TestRelayedEndDropAfterLastByte` checks it.
+
 ## Defects found
 
 Each was found by this matrix and belongs to the relay SDK, not to
