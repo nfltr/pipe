@@ -167,6 +167,14 @@ same matrix on the r26 modules (link v0.12.19, relay client v0.23.9)
 also passed 303 of 303. Defect 4 is outside the matrix (its drops come
 at 30 %); `TestRelayedEndDropAfterLastByte` checks it.
 
+## On v0.1.4, 2026-11-20
+
+nfltr-pipe v0.1.4 (`e39832e`: link v0.13.0, relay client v0.23.12,
+relay-core v0.17.0) with nfltr and nfltr-relay v2.1.73, on the CI
+machine of the baseline (`make reliability`): 101 cells, 3 runs each, 303
+sessions, 44 minutes. **The run passed: 303 of 303, corrupted 0.** Only
+the verdict was kept from this run, not the per-cell medians.
+
 ## Defects found
 
 Each was found by this matrix and belongs to the relay SDK, not to

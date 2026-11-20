@@ -289,25 +289,62 @@ the relay's account states):
 
 ## Install
 
-Release binaries (linux, darwin, windows; amd64, arm64) are on
-[Releases](https://github.com/nfltr/pipe/releases), each checked against
-its signed `SHA256SUMS` and nfltr-pipe's own release key in
+Release binaries for Linux, macOS and Windows on amd64 and arm64 are on
+[Releases](https://github.com/nfltr/pipe/releases). Each release
+carries `SHA256SUMS`, the SHA-256 of every binary, and
+`SHA256SUMS.sshsig`, its signature by nfltr-pipe's own release key in
 [`release/allowed_signers`](release/allowed_signers), Ed25519
-`SHA256:f6CMaXVMYmUA1RGI6EmJ/0SNrAWN8xS7UQgCiXdwkaM` (`ssh-keygen` from
-OpenSSH 8.1 or later):
+`SHA256:f6CMaXVMYmUA1RGI6EmJ/0SNrAWN8xS7UQgCiXdwkaM`. Checking both needs `ssh-keygen` from OpenSSH 8.1 or later
+(`ssh -V` prints the version); its `Good "nfltr-release" signature` line
+names the key's fingerprint, which is the one above. The commands below
+take the latest release; `download/<version>` in place of
+`latest/download` takes another.
+
+Linux (on arm64, `nfltr-pipe_linux_arm64`):
 
 ```console
-$ v=<version>; f=nfltr-pipe_linux_amd64
-$ for x in $f SHA256SUMS SHA256SUMS.sshsig; do curl -fsSLO https://github.com/nfltr/pipe/releases/download/$v/$x; done
+$ f=nfltr-pipe_linux_amd64; u=https://github.com/nfltr/pipe/releases/latest/download
+$ for x in $f SHA256SUMS SHA256SUMS.sshsig; do curl -fsSLO $u/$x; done
 $ curl -fsSLO https://raw.githubusercontent.com/nfltr/pipe/main/release/allowed_signers
 $ ssh-keygen -Y verify -f allowed_signers -I nfltr-release -n nfltr-release -s SHA256SUMS.sshsig < SHA256SUMS
 $ grep " $f\$" SHA256SUMS | sha256sum -c && mkdir -p ~/.local/bin && install -m 755 $f ~/.local/bin/nfltr-pipe
 ```
 
+macOS (on Intel, `nfltr-pipe_darwin_amd64`), which checks the sum with
+`shasum`:
+
+```console
+$ f=nfltr-pipe_darwin_arm64; u=https://github.com/nfltr/pipe/releases/latest/download
+$ for x in $f SHA256SUMS SHA256SUMS.sshsig; do curl -fsSLO $u/$x; done
+$ curl -fsSLO https://raw.githubusercontent.com/nfltr/pipe/main/release/allowed_signers
+$ ssh-keygen -Y verify -f allowed_signers -I nfltr-release -n nfltr-release -s SHA256SUMS.sshsig < SHA256SUMS
+$ grep " $f\$" SHA256SUMS | shasum -a 256 -c && mkdir -p ~/.local/bin && install -m 755 $f ~/.local/bin/nfltr-pipe
+```
+
 `~/.local/bin` is where nfltr's installer puts `nfltr`; add it to `PATH` if
 it is not there yet.
 
-On macOS, which has no `sha256sum`, check the sum with `shasum -a 256 -c` instead.
+Windows, in PowerShell (on arm64, `nfltr-pipe_windows_arm64.exe`):
+
+```powershell
+PS> $ProgressPreference = "SilentlyContinue"; $f = "nfltr-pipe_windows_amd64.exe"; $u = "https://github.com/nfltr/pipe/releases/latest/download"
+PS> foreach ($x in $f, "SHA256SUMS", "SHA256SUMS.sshsig") { Invoke-WebRequest "$u/$x" -OutFile $x }
+PS> Invoke-WebRequest "https://raw.githubusercontent.com/nfltr/pipe/main/release/allowed_signers" -OutFile allowed_signers
+PS> cmd /c "ssh-keygen -Y verify -f allowed_signers -I nfltr-release -n nfltr-release -s SHA256SUMS.sshsig < SHA256SUMS"; if ($LASTEXITCODE) { throw "SHA256SUMS is not signed by the release key" }
+PS> $sum = (Select-String -Path SHA256SUMS -SimpleMatch " $f").Line.Split(" ")[0]
+PS> if ((Get-FileHash $f -Algorithm SHA256).Hash -ne $sum) { throw "$f does not match SHA256SUMS" }
+PS> New-Item -ItemType Directory -Force "$HOME\bin" | Out-Null; Move-Item -Force $f "$HOME\bin\nfltr-pipe.exe"
+```
+
+`cmd /c` hands `SHA256SUMS` to `ssh-keygen` byte for byte, which a
+PowerShell pipe does not; add `$HOME\bin` to `PATH` if it is not there
+yet.
+
+With Go, built from source instead of the signed binary:
+
+```console
+$ go install github.com/nfltr/pipe/cmd/nfltr-pipe@latest
+```
 
 ## Build
 
