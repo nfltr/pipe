@@ -61,7 +61,7 @@ reliability:
 # docker, about 3 minutes. A check workflow job; not in make ci, whose
 # TMPDIR a CI runner's docker cannot mount (there: ci-request
 # TARGET=cross-version). A release moves PIPE_PREV to itself.
-PIPE_PREV ?= v0.1.2
+PIPE_PREV ?= v0.1.3
 export PIPE_PREV
 cross-version:
 	sh bench/rel/cross.sh
