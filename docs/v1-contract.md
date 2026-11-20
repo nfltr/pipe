@@ -38,7 +38,9 @@ machine (`ps`); on a shared machine pass it with `--address-file`.
 | `--machine-credential <file>` | listen | `machine.json` beside the nfltr config file | this machine's certificate (`machine.key` beside it, readable by its owner only); with none found at the default the address is served with no account: direct paths only |
 | `--address-file <file\|->` | dial | none | read the address from this file (refused when others may read it, except on Windows), or `-`: stdin's first line, instead of the argument |
 
-Flags are Go `flag` syntax: `-flag value`, `--flag value`, `--flag=value`.
+Flags are Go `flag` syntax: `-flag value`, `--flag value`, `--flag=value`,
+before or after the address (as nfltr's commands take them); every word
+after the first `--` is an argument.
 dial takes no relay flag: `--relay` or `--relay-http` is a usage error
 (exit 1), since the address names its relay. It ignores
 `$NFLTR_PIPE_RELAY`: the address names its relay; the variable applies to

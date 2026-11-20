@@ -71,3 +71,22 @@ func TestVersion(t *testing.T) {
 		t.Fatalf("version %q: want nfltr-pipe <version> <commit> <go version>", v)
 	}
 }
+
+// Flags may follow the address, as nfltr's commands take them; after --
+// every word is an argument.
+func TestFlagsAfterTheAddress(t *testing.T) {
+	for name, c := range map[string]struct {
+		args []string
+		say  string
+	}{
+		"flag after the address": {[]string{"nf1x", "--direct", "maybe"}, `--direct "maybe": want on or off`},
+		"-- ends the flags":      {[]string{"--", "--direct=off"}, "want an nf1... address"},
+		"two addresses":          {[]string{"nf1x", "--direct", "off", "nf1y"}, "name the address, or --address-file"},
+	} {
+		var code int
+		msg := stderrOf(t, func() { code = dialCmd(t.Context(), c.args) })
+		if code != 1 || !strings.Contains(msg, c.say) {
+			t.Errorf("%s: exit %d, %q: want 1 saying %q", name, code, msg, c.say)
+		}
+	}
+}

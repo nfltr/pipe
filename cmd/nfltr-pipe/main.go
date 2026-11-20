@@ -20,6 +20,7 @@ import (
 	"os/signal"
 	"runtime"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -167,7 +168,7 @@ func addCommon(fs *flag.FlagSet, serving bool) common {
 // relay flag dial does not take named as such.
 func parse(fs *flag.FlagSet, args []string) (help bool, err error) {
 	fs.SetOutput(io.Discard)
-	err = fs.Parse(args)
+	err = parseInterspersed(fs, args)
 	switch {
 	case errors.Is(err, flag.ErrHelp):
 		fmt.Fprint(os.Stderr, usage)
@@ -183,6 +184,27 @@ func parse(fs *flag.FlagSet, args []string) (help bool, err error) {
 		}
 	}
 	return false, fmt.Errorf("%w (%s -h lists the flags)", err, fs.Name())
+}
+
+// parseInterspersed parses args into fs with flags before or after the
+// arguments (as nfltr's commands take them); every word after the first
+// -- is an argument. fs.Args() is the arguments, in order.
+func parseInterspersed(fs *flag.FlagSet, args []string) error {
+	var tail []string
+	if i := slices.Index(args, "--"); i >= 0 {
+		args, tail = args[:i], args[i+1:]
+	}
+	var pos []string
+	for {
+		if err := fs.Parse(args); err != nil {
+			return err
+		}
+		if fs.NArg() == 0 {
+			break
+		}
+		pos, args = append(pos, fs.Arg(0)), fs.Args()[1:]
+	}
+	return fs.Parse(append(append([]string{"--"}, pos...), tail...))
 }
 
 func (c common) config() (nfnet.Config, nfnet.DirectMode, error) {

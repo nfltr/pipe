@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+From the v1.0 surface review ([docs/v1-surface-review.md](docs/v1-surface-review.md)).
+
+- **Flags may follow the address**: `nfltr-pipe dial nf1... --direct off`
+  now dials relayed only (before: exit 1, "name the address"). After
+  `--` every word is an argument.
+- A test keeps built binaries out of the repository.
+
 ## v0.1.4
 
 - **The machine certificate renews itself after an outage.** A listener

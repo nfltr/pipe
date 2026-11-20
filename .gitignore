@@ -3,3 +3,4 @@ spec/*_TTrace_*
 spec/states/
 spec/traces/*.out
 /dist/
+/cmd/nfltr-pipe/nfltr-pipe
