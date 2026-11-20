@@ -33,7 +33,7 @@ func saveRelay(t *testing.T, server, proxy, pin string) {
 func relayConfig(t *testing.T, args ...string) (agentRelay, relay string, pinned bool) {
 	t.Helper()
 	fs := flag.NewFlagSet("t", flag.ContinueOnError)
-	c := addCommon(fs)
+	c := addCommon(fs, true)
 	if err := fs.Parse(args); err != nil {
 		t.Fatal(err)
 	}

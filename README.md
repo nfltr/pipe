@@ -201,9 +201,11 @@ dst$ nfltr-pipe dial --address-file addr > backup.tar
 `listen` prints the address on stderr (stdout is the stream). It is a
 capability: whoever holds it can connect, so pass it over a channel you
 trust. `dial <address>` puts it on the command line, where other users of
-the machine can see it; `dial --address-file <file>` reads it from a file
-only its owner may read (a file others can read is refused, except on
-Windows, where the file is as private as its directory's ACL). A listener
+the machine can see it (`ps`): on a shared machine use `dial
+--address-file <file>`, which reads it from a file only its owner may read
+(a file others can read is refused, except on Windows, where the file is
+as private as its directory's ACL), or `--address-file -`, which reads
+stdin's first line and pipes the rest. A listener
 serves one session; a second dial of the same address is reset.
 
 ## Credentials
@@ -230,24 +232,30 @@ What every 1.x release keeps (commands, flags, environment, exit codes,
 the address, compatibility): [docs/v1-contract.md](docs/v1-contract.md).
 
 ```
-nfltr-pipe listen [--relay host:port] [--relay-http host] [--relay-pin sha256] [--direct on|off] [--machine-credential file]
-nfltr-pipe dial [--relay-pin sha256] [--direct on|off] <address> | --address-file <file>
+nfltr-pipe listen [--relay host:port] [--relay-http host] [--relay-cert-sha256 sha256] [--direct on|off] [--machine-credential file]
+nfltr-pipe dial [--relay-cert-sha256 sha256] [--direct on|off] <address> | --address-file <file|->
+nfltr-pipe version
 ```
 
 `--relay` is the relay the listener registers at: `--relay`, else
 `$NFLTR_PIPE_RELAY`, else the one `nfltr config set-relay` saved (with its
 HTTPS URL and certificate pin; nothing of an account is read), else
 `grpc.nfltr.xyz:443`; an error connecting names the relay and `--relay`.
-The address names it, so `dial` needs no relay flag. `--relay-pin`
+The address names it, so `dial` takes no relay: `--relay`, `--relay-http`
+or `$NFLTR_PIPE_RELAY` set is a usage error. `--relay-cert-sha256`
 (`$NFLTR_RELAY_CERT_SHA256`, else the saved relay's) accepts a private relay's
 certificate by its SHA-256 fingerprint. `--direct off` keeps the session
-relayed.
+relayed (`on` and `off` only). `<command> -h` exits 0; `nfltr-pipe
+version` prints the release, its commit and the Go version.
+
+The exit table is the relay SDK's, the same as nfltr-send's (2 and 9 are
+the relay's account states):
 
 | exit | code | meaning |
 |---|---|---|
 | 0 | | both directions ended and every byte was taken |
 | 1 | usage | bad flags, address or configuration |
-| 2 | auth | the relay refused this machine's certificate |
+| 2 | auth | the relay refused this machine's certificate, or serves no address without an account |
 | 3 | not_found | nothing listens at the address (or it already served its session) |
 | 4 | refused | the listener or the relay refused the session |
 | 5 | unreachable | the relay or the listener was not reached in time |

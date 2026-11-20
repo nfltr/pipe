@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+These change what scripts see; v1.0 keeps them.
+
+- **`dial` takes no relay.** `--relay`, `--relay-http` and
+  `$NFLTR_PIPE_RELAY` were ignored by dial (the address names its
+  relay); now each is a usage error (exit 1) that says so.
+- **`--relay-pin` is now `--relay-cert-sha256`**, the name of its
+  variable `$NFLTR_RELAY_CERT_SHA256` and of nfltr's `config set-relay
+  --cert-sha256`.
+- **`--direct` takes `on` or `off` only**; `true`, `false` and an empty
+  value are usage errors.
+- **`listen -h` and `dial -h` exit 0**, as `help` does.
+- **`nfltr-pipe version`** (and `--version`) prints the release, its
+  commit and the Go version.
+- **`dial --address-file -`** reads the address from stdin's first line
+  and pipes the rest, so the address stays off the command line, which
+  other users of a shared machine can see.
+- The exit table is now nfltr-send's too: one table, the relay SDK's.
+
 - **A second dial of an address in use exits 6, not 10.** The second
   dial could read the listener's reset as a refused secret (exit 10,
   `e2ee_client_refused`); it now exits 6 (`reset`), as the exit table says
@@ -13,7 +31,7 @@
 - **`make cross-version`:** the previous release, downloaded from GitHub
   and verified, against this checkout, both ways, relayed and direct, on
   a private relay; a check workflow job.
-- The README names `--relay-pin`'s variable right: `$NFLTR_RELAY_CERT_SHA256`
+- The README names the pin flag's variable right: `$NFLTR_RELAY_CERT_SHA256`
   (it said `$NFLTR_RELAY_PIN`, which nothing reads).
 
 ## v0.1.2

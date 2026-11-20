@@ -38,7 +38,7 @@ func TestContractDoc(t *testing.T) {
 		}
 	}
 	documented := map[string][]string{}
-	for _, m := range regexp.MustCompile("(?m)^\\| `--([a-z-]+)[^`]*` \\| ([a-z, ]+) \\|").FindAllStringSubmatch(doc, -1) {
+	for _, m := range regexp.MustCompile("(?m)^\\| `--([a-z0-9-]+)[^`]*` \\| ([a-z, ]+) \\|").FindAllStringSubmatch(doc, -1) {
 		documented[m[1]] = strings.Split(m[2], ", ")
 	}
 	sameMap(t, "flags (name: commands)", code, documented)
@@ -68,6 +68,9 @@ func TestContractDoc(t *testing.T) {
 			t.Errorf("the relay SDK's code %d (%s) is %q in the doc's exit table", n, name, exits[strconv.Itoa(n)])
 		}
 	}
+	if !strings.Contains(doc, "`nfltr-pipe version`") || !strings.Contains(usage, "nfltr-pipe version") {
+		t.Error("the version command is missing from the doc or the usage text")
+	}
 }
 
 // flagsOf is cmd's flag names, as its -h prints them.
@@ -84,7 +87,7 @@ func flagsOf(t *testing.T, cmd string) []string {
 	_ = w.Close()
 	out, _ := io.ReadAll(r)
 	var fs []string
-	for _, m := range regexp.MustCompile(`(?m)^  -([a-z-]+)`).FindAllStringSubmatch(string(out), -1) {
+	for _, m := range regexp.MustCompile(`(?m)^  -([a-z0-9-]+)`).FindAllStringSubmatch(string(out), -1) {
 		fs = append(fs, m[1])
 	}
 	if len(fs) == 0 {

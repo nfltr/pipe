@@ -174,7 +174,7 @@ func TestMachineCredentialIsForItsRelay(t *testing.T) {
 func TestAddressNamesTheRelayWithoutPort443(t *testing.T) {
 	for relay, want := range map[string]string{"grpc.relay.example:443": "relay.example", "relay.example:8443": "relay.example:8443"} {
 		fs := flag.NewFlagSet("t", flag.ContinueOnError)
-		c := addCommon(fs)
+		c := addCommon(fs, true)
 		if err := fs.Parse([]string{"--relay", relay}); err != nil {
 			t.Fatal(err)
 		}

@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -36,7 +37,8 @@ const usage = `nfltr-pipe: join two machines' stdin and stdout, end to end encry
 Usage:
   nfltr-pipe listen [flags]
   nfltr-pipe dial [flags] <address>
-  nfltr-pipe dial [flags] --address-file <file>
+  nfltr-pipe dial [flags] --address-file <file|->
+  nfltr-pipe version
 
 listen prints an address (nf1...) on stderr and waits for one session:
 its stdin goes to the dialler's stdout and the dialler's stdin to its
@@ -53,10 +55,13 @@ file, or --machine-credential) the relay carries a session whose direct
 path does not form; with none, listen serves with no account: direct paths
 only, and a dial with no direct path exits 12.
 
-dial takes the address as its argument (other users of this machine can
-see a command line: --address-file keeps it in a file only you can read).
+dial takes the address as its argument, or from --address-file: a file
+only you can read, or - for stdin's first line (the rest of stdin is the
+session's). Other users of this machine can see a command line: on a
+shared machine use --address-file. dial takes no --relay: the address
+names its relay.
 
-Exit status (the relay SDK's table):
+Exit status (the relay SDK's table, shared with nfltr-send):
   0  both directions ended and every byte was taken
   1  usage: bad flags, address or configuration
   2  auth: the relay refused this machine's certificate
@@ -98,6 +103,9 @@ func cli(args []string) int {
 	case "-h", "--help", "help":
 		fmt.Fprint(os.Stdout, usage)
 		return 0
+	case "version", "--version":
+		fmt.Fprintln(os.Stdout, versionLine())
+		return 0
 	}
 	fmt.Fprintf(os.Stderr, "nfltr-pipe: unknown command %q\n\n%s", args[0], usage)
 	return 1
@@ -107,39 +115,91 @@ func cli(args []string) int {
 // except in the README examples' test, whose relay runs in the test.
 var viaRelay = func(c nfnet.Config) nfnet.Config { return c }
 
-// common are both commands' relay flags.
+// versionLine is the release (the module version the go command stamped
+// from the tag), its commit and the Go version that built it.
+func versionLine() string {
+	v, commit := "(devel)", "unknown"
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		if bi.Main.Version != "" {
+			v = bi.Main.Version
+		}
+		for _, s := range bi.Settings {
+			if s.Key == "vcs.revision" {
+				commit = s.Value
+			}
+		}
+	}
+	return fmt.Sprintf("nfltr-pipe %s %s %s", v, commit, runtime.Version())
+}
+
+// common are the relay flags: --relay and --relay-http listen's only (the
+// address names its relay).
 type common struct {
 	relay, relayHTTP, pin, direct *string
 	saved                         savedRelay
 }
 
-// addCommon adds the relay flags. The relay is --relay, else
-// $NFLTR_PIPE_RELAY, else the one `nfltr config set-relay` saved (with its
-// HTTPS URL and certificate pin), else grpc.nfltr.xyz:443.
-func addCommon(fs *flag.FlagSet) common {
+// addCommon adds the relay flags (serving: listen's). The relay is
+// --relay, else $NFLTR_PIPE_RELAY, else the one `nfltr config set-relay`
+// saved (with its HTTPS URL and certificate pin), else grpc.nfltr.xyz:443.
+func addCommon(fs *flag.FlagSet, serving bool) common {
 	saved := loadSavedRelay()
 	relay := defaultRelay
 	if saved.Server != "" {
 		relay = saved.Server
 	}
-	return common{
-		relay:     fs.String("relay", env("NFLTR_PIPE_RELAY", relay), "relay agent-link `address` (listen); $NFLTR_PIPE_RELAY, else the relay nfltr config set-relay saved"),
-		relayHTTP: fs.String("relay-http", "", "relay HTTP `address` the address names; default: the saved relay's --proxy-url host with the saved relay, else --relay without its grpc. prefix and port 443"),
-		pin:       fs.String("relay-pin", env(relaytrust.PinEnv, saved.Pin), "accept the relay certificate with this SHA-256 `fingerprint` (a private relay's); $"+relaytrust.PinEnv+", else the saved relay's"),
-		direct:    fs.String("direct", "on", "direct paths: `mode` on (LAN first, then the lowest round trip) or off (relayed only)"),
-		saved:     saved,
+	c := common{
+		pin:    fs.String("relay-cert-sha256", env(relaytrust.PinEnv, saved.Pin), "accept the relay certificate with this SHA-256 `fingerprint` (a private relay's); $"+relaytrust.PinEnv+", else the saved relay's"),
+		direct: fs.String("direct", "on", "direct paths: `mode` on (LAN first, then the lowest round trip) or off (relayed only)"),
+		saved:  saved,
 	}
+	if serving {
+		c.relay = fs.String("relay", env("NFLTR_PIPE_RELAY", relay), "relay agent-link `address`; $NFLTR_PIPE_RELAY, else the relay nfltr config set-relay saved")
+		c.relayHTTP = fs.String("relay-http", "", "relay HTTP `address` the address names; default: the saved relay's --proxy-url host with the saved relay, else --relay without its grpc. prefix and port 443")
+	} else {
+		c.relay = &relay // this machine's own relay: the dialler's direct paths' discovery falls back to it
+	}
+	return c
+}
+
+// parse parses args into fs quietly: -h prints the usage and fs's flags
+// on stderr (help), and an error is the caller's to say: one line, a
+// relay flag dial does not take named as such.
+func parse(fs *flag.FlagSet, args []string) (help bool, err error) {
+	fs.SetOutput(io.Discard)
+	err = fs.Parse(args)
+	switch {
+	case errors.Is(err, flag.ErrHelp):
+		fmt.Fprint(os.Stderr, usage)
+		fs.SetOutput(os.Stderr)
+		fs.PrintDefaults()
+		return true, nil
+	case err == nil:
+		return false, nil
+	}
+	for _, f := range []string{"relay", "relay-http"} {
+		if err.Error() == "flag provided but not defined: -"+f {
+			return false, fmt.Errorf("dial takes no --%s: the address names its relay", f)
+		}
+	}
+	return false, fmt.Errorf("%w (%s -h lists the flags)", err, fs.Name())
 }
 
 func (c common) config() (nfnet.Config, nfnet.DirectMode, error) {
+	if *c.direct != "on" && *c.direct != "off" {
+		return nfnet.Config{}, nfnet.DirectOff, fmt.Errorf("--direct %q: want on or off", *c.direct)
+	}
 	mode, err := agent.ParseDirectMode(*c.direct)
 	if err != nil {
 		return nfnet.Config{}, nfnet.DirectOff, fmt.Errorf("--direct: %w", err)
 	}
 	if *c.pin != "" {
 		if _, err := relaytrust.ParsePin(*c.pin); err != nil {
-			return nfnet.Config{}, nfnet.DirectOff, err
+			return nfnet.Config{}, nfnet.DirectOff, fmt.Errorf("--relay-cert-sha256: %w", err)
 		}
+	}
+	if c.relayHTTP == nil { // dial: the address names the relay
+		return nfnet.Config{AgentRelay: *c.relay, RelayTLS: relaytrust.WithPin(nil, *c.pin)}, mode, nil
 	}
 	http := *c.relayHTTP
 	if http == "" && *c.relay == c.saved.Server {
@@ -166,11 +226,13 @@ func osStdio() stdio { return stdio{os.Stdin, os.Stdout, os.Stderr} }
 
 func listenCmd(ctx context.Context, args []string) int {
 	fs := flag.NewFlagSet("nfltr-pipe listen", flag.ContinueOnError)
-	cf := addCommon(fs)
+	cf := addCommon(fs, true)
 	machineFile := fs.String("machine-credential", "", "this machine's certificate `file` (machine.json, machine.key beside it); default: the one nfltr config login saved")
-	fs.Usage = func() { fmt.Fprint(os.Stderr, usage); fs.PrintDefaults() }
-	if err := fs.Parse(args); err != nil {
-		return 1
+	if help, err := parse(fs, args); help || err != nil {
+		if help {
+			return 0
+		}
+		return fail(os.Stderr, 1, err)
 	}
 	if fs.NArg() != 0 {
 		return fail(os.Stderr, 1, errors.New("listen: no arguments"))
@@ -250,11 +312,21 @@ func refuseOthers(ln *nfnet.Listener) {
 
 func dialCmd(ctx context.Context, args []string) int {
 	fs := flag.NewFlagSet("nfltr-pipe dial", flag.ContinueOnError)
-	cf := addCommon(fs)
-	addrFile := fs.String("address-file", "", "read the address from this `file` (mode 0600) instead of the command line")
-	fs.Usage = func() { fmt.Fprint(os.Stderr, usage); fs.PrintDefaults() }
-	if err := fs.Parse(args); err != nil {
-		return 1
+	cf := addCommon(fs, false)
+	addrFile := fs.String("address-file", "", "read the address from this `file` (mode 0600), or - for stdin's first line, instead of the command line")
+	help, err := parse(fs, args)
+	if help {
+		return 0
+	}
+	if err == nil && os.Getenv("NFLTR_PIPE_RELAY") != "" {
+		err = errors.New("dial: $NFLTR_PIPE_RELAY is set: the address names its relay; unset it for dial")
+	}
+	if err != nil {
+		return fail(os.Stderr, 1, err)
+	}
+	cfg, mode, err := cf.config()
+	if err != nil {
+		return fail(os.Stderr, 1, err)
 	}
 	var addr string
 	switch {
@@ -273,11 +345,7 @@ func dialCmd(ctx context.Context, args []string) int {
 	if err != nil || t.Kind != nfnet.AddressTarget {
 		return fail(os.Stderr, 1, fmt.Errorf("dial: want an nf1... address (%v)", err))
 	}
-	cfg, mode, err := cf.config()
-	if err != nil {
-		return fail(os.Stderr, 1, err)
-	}
-	cfg.Relay = t.Address.Relay // --relay-pin verifies the address's relay
+	cfg.Relay = t.Address.Relay // --relay-cert-sha256 verifies the address's relay
 	return dial(ctx, viaRelay(cfg), t, mode, osStdio())
 }
 
@@ -454,6 +522,9 @@ func codeOr(err error, def nfnet.Code) int {
 }
 
 func readAddress(name string) (string, error) {
+	if name == "-" {
+		return firstLine(os.Stdin)
+	}
 	// Windows reports every writable file as 0666 whatever its ACL says:
 	// there the file is as private as its directory's ACL.
 	if fi, err := os.Stat(name); err == nil && runtime.GOOS != "windows" && fi.Mode().Perm()&0o077 != 0 {
@@ -461,6 +532,26 @@ func readAddress(name string) (string, error) {
 	}
 	b, err := os.ReadFile(name) // #nosec G304 -- the file the user named
 	return strings.TrimSpace(string(b)), err
+}
+
+// firstLine reads r's first line a byte at a time, so that what follows
+// it stays r's (the session's), at most 4 KiB.
+func firstLine(r io.Reader) (string, error) {
+	var b []byte
+	c := make([]byte, 1)
+	for len(b) < 4096 {
+		n, err := r.Read(c)
+		if n == 1 && c[0] != '\n' {
+			b = append(b, c[0])
+		}
+		if (n == 1 && c[0] == '\n') || err == io.EOF {
+			return strings.TrimSpace(string(b)), nil
+		}
+		if err != nil {
+			return "", fmt.Errorf("stdin: %w", err)
+		}
+	}
+	return "", errors.New("stdin: no address in its first 4 KiB")
 }
 
 // enrolHint says what to do when the relay refused the certificate, or

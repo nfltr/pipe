@@ -124,7 +124,7 @@ def relay_up():
     for who in ("l", "d", "anon"):
         h = f"{W}/home-{who}"
         os.makedirs(h, exist_ok=True)
-        ENV[who] = dict(os.environ, HOME=h, NFLTR_CONFIG=f"{h}/config.yaml")
+        ENV[who] = dict(os.environ, HOME=h, NFLTR_CONFIG=f"{h}/config.yaml", NFLTR_RELAY_CERT_SHA256=PIN)
     with open(f"{W}/relay/admin-enrol-code") as code:
         sp.run(["ip", "netns", "exec", "l", f"{B}/nfltr", "config", "set-relay", f"{RELAY}:8443", "--proxy-url",
                 f"https://{RELAY}:8444", "--cert-sha256", PIN, "--code-file", "-"], stdin=code, env=ENV["l"], check=True,
@@ -289,7 +289,7 @@ def run_cell(c, ld):
     out = {"l": f"{run}/l.out", "d": f"{run}/d.out"}
     f = c.get("fault") or {}
     relayed = c["path"] == "relayed"
-    common = ["--relay-pin", PIN] + (["--direct", "off"] if relayed else [])
+    common = ["--direct", "off"] if relayed else []  # the pin: $NFLTR_RELAY_CERT_SHA256 (ENV), the same in every release
     want = {"l": c.get("expect_l", (0,)), "d": c.get("expect_d", (0,))}
     row = {"cell": c["name"], "bytes_l": nl, "bytes_d": nd, "fault": f or None}
     ends = []
