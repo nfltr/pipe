@@ -8,8 +8,9 @@
 # and the mutant traces rejected (spec/README.md "Traces"). All run in CI,
 # and the tests on Windows too.
 .PHONY: ci check spec spec-traces release release-sign release-verify release-dryrun reliability cross-version
-# make ci: the check workflow's Linux jobs, for a CI runner of our own.
-ci: check spec spec-traces release-dryrun cross-version
+# make ci: the check workflow's Linux jobs but cross-version, for a CI runner
+# of our own.
+ci: check spec spec-traces release-dryrun
 
 check:
 	@test -z "$$(gofmt -l .)" || { gofmt -l .; exit 1; }
@@ -57,7 +58,9 @@ reliability:
 # GitHub release, signature and sums verified) against nfltr-pipe built
 # from this checkout, both ways, relayed and direct, on a private relay
 # (bench/rel/cross.sh; docs/v1-contract.md "Compatibility"); Linux with
-# docker, about 3 minutes. A release moves PIPE_PREV to itself.
+# docker, about 3 minutes. A check workflow job; not in make ci, whose
+# TMPDIR a CI runner's docker cannot mount (there: ci-request
+# TARGET=cross-version). A release moves PIPE_PREV to itself.
 PIPE_PREV ?= v0.1.2
 export PIPE_PREV
 cross-version:

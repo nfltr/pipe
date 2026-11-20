@@ -81,7 +81,8 @@ A 1.x end works with any 1.x end, both ways: a listener of one 1.x
 release and a dialler of another open the session, carry every byte both
 directions, half-close and end with the exit codes above, relayed and
 direct, and with a listener with no account. `make cross-version`
-(`bench/rel/cross.sh`, in `make ci` and the check workflow) runs the
+(`bench/rel/cross.sh`, a check workflow job; on the nfltr CI runners
+`make ci-request REPO=pipe REF=<sha> TARGET=cross-version`) runs the
 previous release (`PIPE_PREV`, downloaded from its GitHub release, its
 signature and sum verified) against this checkout both ways on a private
 relay. Both ends need a relay that serves nf1 addresses (nfltr-relay

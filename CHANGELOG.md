@@ -12,7 +12,7 @@
   and it differ.
 - **`make cross-version`:** the previous release, downloaded from GitHub
   and verified, against this checkout, both ways, relayed and direct, on
-  a private relay; in `make ci` and the check workflow.
+  a private relay; a check workflow job.
 - The README names `--relay-pin`'s variable right: `$NFLTR_RELAY_CERT_SHA256`
   (it said `$NFLTR_RELAY_PIN`, which nothing reads).
 
