@@ -8,6 +8,10 @@ From the v1.0 surface review ([docs/v1-surface-review.md](docs/v1-surface-review
   now dials relayed only (before: exit 1, "name the address"). After
   `--` every word is an argument.
 - A test keeps built binaries out of the repository.
+- **`--relay-cert-sha256` is now `--cert-sha256`**, the name `nfltr config
+  set-relay` and nfltr's `cat` commands use (one name in all three tools);
+  `--relay-cert-sha256` is refused. `$NFLTR_RELAY_CERT_SHA256` is
+  unchanged.
 
 ## v0.1.4
 

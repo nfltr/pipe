@@ -232,8 +232,8 @@ What every 1.x release keeps (commands, flags, environment, exit codes,
 the address, compatibility): [docs/v1-contract.md](docs/v1-contract.md).
 
 ```
-nfltr-pipe listen [--relay host:port] [--relay-http host] [--relay-cert-sha256 sha256] [--direct on|off] [--machine-credential file]
-nfltr-pipe dial [--relay-cert-sha256 sha256] [--direct on|off] <address> | --address-file <file|->
+nfltr-pipe listen [--relay host:port] [--relay-http host] [--cert-sha256 sha256] [--direct on|off] [--machine-credential file]
+nfltr-pipe dial [--cert-sha256 sha256] [--direct on|off] <address> | --address-file <file|->
 nfltr-pipe version
 ```
 
@@ -243,7 +243,7 @@ HTTPS URL and certificate pin; nothing of an account is read), else
 `grpc.nfltr.xyz:443`; an error connecting names the relay and `--relay`.
 The address names it, so `dial` takes no relay flag: `--relay` or
 `--relay-http` is a usage error, and `$NFLTR_PIPE_RELAY` (listen's) is
-ignored. `--relay-cert-sha256`
+ignored. `--cert-sha256`
 (`$NFLTR_RELAY_CERT_SHA256`, else the saved relay's) accepts a private relay's
 certificate by its SHA-256 fingerprint. `--direct off` keeps the session
 relayed (`on` and `off` only). `<command> -h` exits 0; `nfltr-pipe

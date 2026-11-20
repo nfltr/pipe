@@ -33,7 +33,7 @@ machine (`ps`); on a shared machine pass it with `--address-file`.
 |---|---|---|---|
 | `--relay <address>` | listen | `$NFLTR_PIPE_RELAY`, else the relay `nfltr config set-relay` saved, else `grpc.nfltr.xyz:443` | the relay's agent-link address the listener registers at |
 | `--relay-http <address>` | listen | the saved relay's `--proxy-url` host, else `--relay` without its `grpc.` prefix; port 443 dropped | the relay HTTP host the address names |
-| `--relay-cert-sha256 <sha256>` | listen, dial | `$NFLTR_RELAY_CERT_SHA256`, else the saved relay's pin | accept the relay's certificate by its SHA-256 fingerprint (a private relay's); on dial it verifies the address's relay |
+| `--cert-sha256 <sha256>` | listen, dial | `$NFLTR_RELAY_CERT_SHA256`, else the saved relay's pin | accept the relay's certificate by its SHA-256 fingerprint (a private relay's); on dial it verifies the address's relay |
 | `--direct on\|off` | listen, dial | `on` | `on`: a direct path (QUIC) when the networks allow one, LAN first; `off`: relayed only (refused on listen with no machine certificate); any other value is a usage error |
 | `--machine-credential <file>` | listen | `machine.json` beside the nfltr config file | this machine's certificate (`machine.key` beside it, readable by its owner only); with none found at the default the address is served with no account: direct paths only |
 | `--address-file <file\|->` | dial | none | read the address from this file (refused when others may read it, except on Windows), or `-`: stdin's first line, instead of the argument |
@@ -51,7 +51,7 @@ listen only.
 | variable | read by | meaning |
 |---|---|---|
 | `$NFLTR_PIPE_RELAY` | listen | `--relay`'s default; dial ignores it (the address names its relay; the variable applies to listen only) |
-| `$NFLTR_RELAY_CERT_SHA256` | listen, dial | `--relay-cert-sha256`'s default (the relay SDK's name, shared with nfltr) |
+| `$NFLTR_RELAY_CERT_SHA256` | listen, dial | `--cert-sha256`'s default (the relay SDK's name, shared with nfltr) |
 | `$NFLTR_CONFIG` | listen, dial | the nfltr config file (default `~/.config/nfltr/nfltr.json`): its saved relay (`server`, `proxy_url`, `relay_cert_sha256`; nothing of an account), and the directory of `machine.json` |
 
 ## Exit codes

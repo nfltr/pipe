@@ -20,7 +20,7 @@ every "change" below is applied in this lane (CHANGELOG.md
 | 5 | CLI | dial takes the address as an argument; nfltr-send's receive and nfltr cat refuse it on the command line | kept: a pipe address is spent by its one session (a second dial is reset, a later one finds nothing) and the listener then exits; the contract and the usage text say a shared machine passes it with `--address-file` (a 0600 file, or `-`: stdin's first line) |
 | 6 | CLI | the address is printed on stderr; nfltr-send prints it on stdout | kept: stdout is the session's bytes |
 | 7 | exit codes | a stopped end (SIGINT, SIGTERM, SIGHUP) exits 6; nfltr-send's stopped sender 129/130/143 | kept: a pipe end stopped mid-session cut the session (6); send serves until stopped, so its stop must differ from a failure |
-| 8 | naming | `--relay` / `$NFLTR_PIPE_RELAY` and `--relay-cert-sha256` here and in nfltr-send; nfltr's cat commands say `--server` / `$NFLTR_SERVER` and `--pin-cert` | kept here: the two products agree with each other and with `nfltr config set-relay --cert-sha256` |
+| 8 | naming | `--relay` / `$NFLTR_PIPE_RELAY` and `--relay-cert-sha256` here and in nfltr-send; nfltr's cat commands say `--server` / `$NFLTR_SERVER` and `--pin-cert`, `nfltr config set-relay` says `--cert-sha256` | `--cert-sha256` in all three (nfltr's decision, docs/decisions/relay-pin-flag-name-2026-11-20.md, lane UXNEXT): the name the relay SDK's hint and `nfltr-relay`'s enrolment lines already print; `--relay-cert-sha256` is refused. `--relay` stays (nfltr's `--server` is nfltr's own) |
 | 9 | naming | `--machine-credential <file>` while every message says "machine certificate" | kept: the file (`machine.json`) holds the certificate and names its key file; nfltr-send uses the same flag |
 | 10 | code | `machine.go` and `saved_relay.go` are the same file in send and pipe | no surface change; a later move into the relay SDK changes neither CLI |
 
@@ -34,6 +34,5 @@ renewed `machine.json` (nfltr's format, written in place).
 
 ## Follow-up (not in this repository)
 
-- nfltr: `nfltr cat`'s `--pin-cert` is `config set-relay --cert-sha256`'s
-  and nfltr-pipe's `--relay-cert-sha256`; one name across nfltr is
-  nfltr's decision.
+- Done (lane UXNEXT): one name, `--cert-sha256`, in nfltr, nfltr-pipe and
+  nfltr-send.

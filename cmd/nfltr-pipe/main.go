@@ -150,7 +150,7 @@ func addCommon(fs *flag.FlagSet, serving bool) common {
 		relay = saved.Server
 	}
 	c := common{
-		pin:    fs.String("relay-cert-sha256", env(relaytrust.PinEnv, saved.Pin), "accept the relay certificate with this SHA-256 `fingerprint` (a private relay's); $"+relaytrust.PinEnv+", else the saved relay's"),
+		pin:    fs.String("cert-sha256", env(relaytrust.PinEnv, saved.Pin), "accept the relay certificate with this SHA-256 `fingerprint` (a private relay's); $"+relaytrust.PinEnv+", else the saved relay's"),
 		direct: fs.String("direct", "on", "direct paths: `mode` on (LAN first, then the lowest round trip) or off (relayed only)"),
 		saved:  saved,
 	}
@@ -217,7 +217,7 @@ func (c common) config() (nfnet.Config, nfnet.DirectMode, error) {
 	}
 	if *c.pin != "" {
 		if _, err := relaytrust.ParsePin(*c.pin); err != nil {
-			return nfnet.Config{}, nfnet.DirectOff, fmt.Errorf("--relay-cert-sha256: %w", err)
+			return nfnet.Config{}, nfnet.DirectOff, fmt.Errorf("--cert-sha256: %w", err)
 		}
 	}
 	if c.relayHTTP == nil { // dial: the address names the relay
@@ -364,7 +364,7 @@ func dialCmd(ctx context.Context, args []string) int {
 	if err != nil || t.Kind != nfnet.AddressTarget {
 		return fail(os.Stderr, 1, fmt.Errorf("dial: want an nf1... address (%v)", err))
 	}
-	cfg.Relay = t.Address.Relay // --relay-cert-sha256 verifies the address's relay
+	cfg.Relay = t.Address.Relay // --cert-sha256 verifies the address's relay
 	return dial(ctx, viaRelay(cfg), t, mode, osStdio())
 }
 

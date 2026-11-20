@@ -21,13 +21,14 @@ func TestDialRefusesARelayAndDirectIsOnOrOff(t *testing.T) {
 		args []string
 		say  string
 	}{
-		"--relay":            {"", []string{"dial", "--relay", "x:443", addr}, "takes no --relay"},
-		"--relay=":           {"", []string{"dial", "--relay=x:443", addr}, "takes no --relay"},
-		"--relay-http":       {"", []string{"dial", "--relay-http", "x", addr}, "takes no --relay-http"},
-		"$NFLTR_PIPE_RELAY":  {"x:443", []string{"dial", addr}, "want an nf1... address"}, // ignored: on to the address
-		"--direct true":      {"", []string{"dial", "--direct", "true", addr}, `--direct "true": want on or off`},
-		"listen --direct=":   {"", []string{"listen", "--direct="}, `--direct "": want on or off`},
-		"--relay-pin (gone)": {"", []string{"dial", "--relay-pin", "00", addr}, "not defined: -relay-pin"},
+		"--relay":                    {"", []string{"dial", "--relay", "x:443", addr}, "takes no --relay"},
+		"--relay=":                   {"", []string{"dial", "--relay=x:443", addr}, "takes no --relay"},
+		"--relay-http":               {"", []string{"dial", "--relay-http", "x", addr}, "takes no --relay-http"},
+		"$NFLTR_PIPE_RELAY":          {"x:443", []string{"dial", addr}, "want an nf1... address"}, // ignored: on to the address
+		"--direct true":              {"", []string{"dial", "--direct", "true", addr}, `--direct "true": want on or off`},
+		"listen --direct=":           {"", []string{"listen", "--direct="}, `--direct "": want on or off`},
+		"--relay-pin (gone)":         {"", []string{"dial", "--relay-pin", "00", addr}, "not defined: -relay-pin"},
+		"--relay-cert-sha256 (gone)": {"", []string{"dial", "--relay-cert-sha256", "00", addr}, "not defined: -relay-cert-sha256"},
 	} {
 		t.Setenv("NFLTR_PIPE_RELAY", c.env)
 		var code int
