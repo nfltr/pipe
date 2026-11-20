@@ -213,15 +213,19 @@ nfltr-pipe: none is worked around here.
    sender's 0 claims more than happened, against "Ends that tell" in the
    README and `CleanExit` in `spec/Pipe.tla`, whose session is end to end.
    The matrix does not reach it: its drops come at 30 %. Reproducer
-   `TestRelayedEndDropAfterLastByte` (branch `SENDONCE-defect4`): 4 MiB
-   from the listener, the dialler's link silenced at the listener's stdin
-   end; on the r25 modules the listener exits 0 and the dialler 6 with
+   `TestRelayedEndDropAfterLastByte` (`cmd/nfltr-pipe/enddrop_test.go`):
+   4 MiB from the listener, the dialler's link silenced at the
+   listener's stdin end; on the r25 modules the listener exits 0 and the dialler 6 with
    4,014,080 of 4,194,304 bytes. nfltr-send is not affected: its receiver
-   takes the sender's own clean end as its word, not its Close. Open: the
-   fix is a relayed Close that waits for the far end's acknowledgement,
-   as the direct path's does, a wire change through the relay (link
-   chaining) that needs its design and TLA+ first; nfltr-pipe adds no
-   protocol of its own to work around it.
+   takes the sender's own clean end as its word, not its Close. Fixed in
+   link v0.12.19, relay client v0.23.9 and relay-core v0.16.8 (lane
+   RELAYCLOSE, link `spec/RelayedClose.tla`): a relayed Close returns
+   once the far end took the end (link `FeatureEndAck`: the far end's
+   ENDACK through the relay's join), as a direct one does, and gives up
+   after its idle bound when the far end is silent, so the end exits 6,
+   not 0. On the r27 modules `TestRelayedEndDropAfterLastByte` passes
+   (in `make check`): the listener exits 6, the dialler 6 with 3,997,696
+   of 4,194,304 bytes.
 
 The matrix also found that a direct session's Close returned nil when the
 peer had not acknowledged the END (the session failed first): fixed in

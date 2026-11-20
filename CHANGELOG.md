@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.1.3
 
 These change what scripts see; v1.0 keeps them.
 
@@ -25,6 +25,14 @@ These change what scripts see; v1.0 keeps them.
   dial could read the listener's reset as a refused secret (exit 10,
   `e2ee_client_refused`); it now exits 6 (`reset`), as the exit table says
   (relay client, nf1; [defect 3](docs/reliability.md#defects-found)).
+- **Relayed, an end exits 0 only when its peer has the whole stream.** A
+  relayed close returned once the relay had the last bytes, so when the
+  peer's link dropped right then an end could exit 0 while its peer exited
+  6 with a prefix. A relayed close now waits for the peer to acknowledge
+  the end through the relay, as a direct close does, and gives up when the
+  peer stays silent past its bound: that end then exits 6 (link v0.12.20,
+  relay client v0.23.10, relay-core v0.16.9;
+  [defect 4](docs/reliability.md#defects-found)).
 - **The contract of a 1.x release:** [docs/v1-contract.md](docs/v1-contract.md)
   lists the commands, flags, environment variables, exit codes, the
   address format and the compatibility rule; a test fails when the code
@@ -34,6 +42,8 @@ These change what scripts see; v1.0 keeps them.
   a private relay; a check workflow job.
 - The README names the pin flag's variable right: `$NFLTR_RELAY_CERT_SHA256`
   (it said `$NFLTR_RELAY_PIN`, which nothing reads).
+- Built on link v0.12.20, relay client v0.23.10, relay proto v0.21.4 and
+  relay-core v0.16.9.
 
 ## v0.1.2
 

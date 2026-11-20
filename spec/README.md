@@ -61,7 +61,7 @@ that maps to no action).
 | assumption | source |
 |---|---|
 | a session's bytes arrive in order, once, and its END after them; a reset is read as an error, never as an END | relay client `nfnet.Conn` (its Read: "io.EOF only at the peer's half close"), link `WIRE.md` |
-| a clean `Close` returns once the session's frames are written to the relay or the direct path (the model's session is end to end, so on a relayed path `Closed` assumes more than this: the relay may still hold the tail, docs/reliability.md defect 4, open) | relay client `nfnet` `dropMux` (Drain) and the dialer's and listener's Close |
+| a clean `Close` returns once the peer took the session's end, on the relayed path as on the direct one (the model's session is end to end; docs/reliability.md defect 4, fixed in relay client v0.23.9) | relay client `nfnet` `Conn.Close` and the listener's accepted Close; link `FeatureEndAck` (`WIRE.md` 13, link `spec/RelayedClose.tla`) |
 | a vanished peer's session is cut within the SDK's liveness bounds | link ping liveness (`Liveness` presets), the direct path's QUIC idle timeout |
 | a process's local stdin and stdout fail with an error, not a hang (SIGPIPE ignored) | `cmd/nfltr-pipe/main.go` |
 
