@@ -170,6 +170,8 @@ github.com/nfltr/relay-core v0.16.7 h1:iDYcHSbEYHahVtHdBHFP3zdYK1iu3bzxIe93pwOjZ
 github.com/nfltr/relay-core v0.16.7/go.mod h1:IgQmWenXlHXdECH5tgRCn5KXANlcZJJ65W6okHJbVE0=
 github.com/nfltr/relay/client v0.23.8 h1:e2eALm98qpSzJ52i83x9qvSZGrQhR6VbX3KtzA155WU=
 github.com/nfltr/relay/client v0.23.8/go.mod h1:wGLOpl1l580jTCC+24CXJsfuff4j984vayyluXykjDU=
+github.com/nfltr/relay/client v0.23.9-0.20261120022355-e4779c8a5154 h1:Q0g1J324+fY+Qa+s4SDw0mmMYjzHJO0JGIH8N/4AzTM=
+github.com/nfltr/relay/client v0.23.9-0.20261120022355-e4779c8a5154/go.mod h1:wGLOpl1l580jTCC+24CXJsfuff4j984vayyluXykjDU=
 github.com/nfltr/relay/proto v0.21.2 h1:Mt5tp09dMa4dohYMyrcF2SntW+dCDiwAByZO1NNbDV0=
 github.com/nfltr/relay/proto v0.21.2/go.mod h1:uUiLTMTi4mDzNpF9UnkWRun/VAgCpReaM48oW/inHOs=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
