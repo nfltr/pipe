@@ -261,3 +261,29 @@ func TestOpenFailuresAreTyped(t *testing.T) {
 	<-lc
 	wait(t, "dial of a closed address", startDial(t, t.Context(), r, gone, nfnet.DirectOff, bytes.NewReader(nil), newOut()), 3)
 }
+
+// A second dial of an address whose session runs is reset: it exits 6
+// (never 10, which says the address's secret was refused: defect 3,
+// docs/reliability.md) and the first session completes, on each path and
+// with an account's listener taking direct paths (the matrix's direct
+// cells).
+func TestSecondDialIsReset(t *testing.T) {
+	for _, p := range append(paths, path{"account-direct", false, nfnet.DirectOn}) {
+		t.Run(p.name, func(t *testing.T) {
+			r := testRelay(t)
+			lin, lw := io.Pipe()
+			din, dw := io.Pipe()
+			la, da := newOut(), newOut()
+			addr, lc := startListen(t, t.Context(), r, p, lin, la)
+			dc := startDial(t, t.Context(), r, addr, p.direct, din, da)
+			if _, err := dw.Write([]byte("x")); err != nil { // the first session open
+				t.Fatal(err)
+			}
+			wait(t, "second dial", startDial(t, t.Context(), r, addr, p.direct, bytes.NewReader(nil), newOut()), 6)
+			_ = lw.Close()
+			_ = dw.Close()
+			wait(t, "dial", dc, 0)
+			wait(t, "listen", lc, 0)
+		})
+	}
+}

@@ -15,7 +15,9 @@ Env: REL_BIN (nfltr-pipe, nfltr, nfltr-relay; default /bin-in), REL_OUT
 (default /out), REL_N (runs per cell, default 3), REL_CELLS (regex: the
 cells to run), REL_TIMEOUT (s per session, default 300), REL_LARGE (bytes
 each way of the large cells, default 1 GiB), REL_RSS_MB (an end's resident
-memory bound, default 160), REL_UID (owner of REL_OUT's files at the end)."""
+memory bound, default 160), REL_UID (owner of REL_OUT's files at the end), REL_PIPE_L and REL_PIPE_D (the
+listener's and the dialler's nfltr-pipe in REL_BIN, default nfltr-pipe: two
+versions, cross.sh)."""
 import json, os, re, signal, statistics, subprocess as sp, sys, threading, time
 
 B = os.environ.get("REL_BIN", "/bin-in")
@@ -28,6 +30,7 @@ LARGE = int(os.environ.get("REL_LARGE", str(1024 * MiB)))
 W = "/w"
 RELAY = "10.77.0.1"
 IP = {"l": "10.77.0.2", "d": "10.77.0.3"}
+PIPE = {"l": os.environ.get("REL_PIPE_L", "nfltr-pipe"), "d": os.environ.get("REL_PIPE_D", "nfltr-pipe")}
 
 
 def sh(cmd, check=True):
@@ -172,7 +175,7 @@ class End:
     def __init__(self, ns, args, env, src, out, log, feeder=None, reader=None):
         self.out, self.rss, self.t_exit = out, 0, None
         fi, fo, fe = None if feeder else open(src, "rb"), open(out, "wb"), open(log, "wb")
-        self.p = sp.Popen(["ip", "netns", "exec", ns, f"{B}/nfltr-pipe"] + args, env=env, stdin=fi or sp.PIPE,
+        self.p = sp.Popen(["ip", "netns", "exec", ns, f"{B}/{PIPE[ns]}"] + args, env=env, stdin=fi or sp.PIPE,
                           stdout=sp.PIPE if reader else fo, stderr=fe, start_new_session=True)
         for x in (fi, fo, fe):  # the child holds its own copies; out exists from here on for a reader
             if x:
@@ -526,7 +529,7 @@ def aggregate(rows):
 def machine():
     return {"kernel": sh("uname -r"), "cpus": os.cpu_count(), "load": open("/proc/loadavg").read().split()[:3],
             "rmem_max": open("/proc/sys/net/core/rmem_max").read().strip(),
-            "nfltr-pipe_sha256": sh(f"sha256sum {B}/nfltr-pipe | cut -d' ' -f1"),
+            **{f"nfltr-pipe_{n}_sha256": sh(f"sha256sum {B}/{b} | cut -d' ' -f1") for n, b in PIPE.items()},
             "nfltr": sh(f"{B}/nfltr version | head -1"), "nfltr-relay": sh(f"{B}/nfltr-relay version 2>&1 | head -1")}
 
 

@@ -7,9 +7,9 @@
 # pipetrace, each session end's trace checked against the model with TLC,
 # and the mutant traces rejected (spec/README.md "Traces"). All run in CI,
 # and the tests on Windows too.
-.PHONY: ci check spec spec-traces release release-sign release-verify release-dryrun reliability
+.PHONY: ci check spec spec-traces release release-sign release-verify release-dryrun reliability cross-version
 # make ci: the check workflow's Linux jobs, for a CI runner of our own.
-ci: check spec spec-traces release-dryrun
+ci: check spec spec-traces release-dryrun cross-version
 
 check:
 	@test -z "$$(gofmt -l .)" || { gofmt -l .; exit 1; }
@@ -52,3 +52,13 @@ NFLTR_VERSION ?= v2.1.73
 export NFLTR_VERSION
 reliability:
 	sh bench/rel/run.sh
+
+# make cross-version: the previous release PIPE_PREV (downloaded from its
+# GitHub release, signature and sums verified) against nfltr-pipe built
+# from this checkout, both ways, relayed and direct, on a private relay
+# (bench/rel/cross.sh; docs/v1-contract.md "Compatibility"); Linux with
+# docker, about 3 minutes. A release moves PIPE_PREV to itself.
+PIPE_PREV ?= v0.1.2
+export PIPE_PREV
+cross-version:
+	sh bench/rel/cross.sh
