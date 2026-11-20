@@ -1,6 +1,26 @@
 # Changelog
 
-## v0.1.1 (unreleased)
+## v0.1.2 (unreleased)
+
+- **A direct session under loss no longer loses its tail.** On a slow,
+  lossy direct path an end could exit 0 while the other end exited 6 with
+  a right but short stream: bytes its transport had already taken were
+  dropped by the reset at the sender's exit. They are now kept and read
+  to the end (link v0.12.18; [defect 1](docs/reliability.md#defects-found)).
+- **A stopped end resets its peer before it exits.** When one end stops
+  early (its stdout closed, Ctrl-C) on a direct session, the other end now
+  exits 6 within about a second; before, it waited about 30 s for a lost
+  path (relay client v0.23.8; defect 2).
+- **Exit 0 only when the peer has the whole stream.** A direct session's
+  close now waits as long as the peer keeps acknowledging (before, it
+  reset the session after 30 s even while the tail was still arriving),
+  gives up 5 s after the peer goes silent, and exits 6 when the peer never
+  acknowledged the end, where it could exit 0 before (relay client
+  v0.23.8).
+- Built on link v0.12.18, relay client v0.23.8, relay proto v0.21.2 and
+  relay-core v0.16.7.
+
+## v0.1.1
 
 - **The relay you chose is the one used.** nfltr-pipe takes its relay from
   `--relay`, else `$NFLTR_PIPE_RELAY`, else the relay `nfltr config
