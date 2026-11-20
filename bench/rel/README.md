@@ -86,6 +86,22 @@ $ make reliability REL_N=1 REL_CELLS='^kill-'   # a subset
 On the nfltr CI runners: `make ci-request REPO=pipe REF=<sha>
 TARGET=reliability`. It exits 0 only when every session passed.
 
+## Cross-version
+
+`make cross-version` (`cross.sh`, in `make ci` and the check workflow)
+runs the previous release, `PIPE_PREV` in the Makefile (downloaded from its
+GitHub release by `fetch.sh`, `SHA256SUMS.sshsig` verified against
+`release/allowed_signers` and the binary against `SHA256SUMS`), against
+nfltr-pipe built from the checkout, on this harness's private relay, twice:
+the old one listens and the new one dials (`REL_PIPE_L`, `REL_PIPE_D`), then the reverse. Cells (`CROSS_CELLS`): `size-16m-both`, both half closes, a SIGTERM of each end, each relayed and direct, and `anon-direct`; `REL_N` runs each (default 1).
+Results in `REL_OUT/<first>-<second>/`. It exits 0 only when every run of
+both ways passed. A release moves `PIPE_PREV` to itself.
+
+```console
+$ make cross-version
+$ make cross-version PIPE_PREV=v0.1.0 REL_N=3
+```
+
 Limits: one machine, so the round trip and the loss are netem's, not a
 real path's, and every cell shares the machine's CPU with whatever else
 runs there (each run records the load average). The host's

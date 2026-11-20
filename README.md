@@ -226,6 +226,9 @@ peer to peer:
 
 ## Flags and exit codes
 
+What every 1.x release keeps (commands, flags, environment, exit codes,
+the address, compatibility): [docs/v1-contract.md](docs/v1-contract.md).
+
 ```
 nfltr-pipe listen [--relay host:port] [--relay-http host] [--relay-pin sha256] [--direct on|off] [--machine-credential file]
 nfltr-pipe dial [--relay-pin sha256] [--direct on|off] <address> | --address-file <file>
