@@ -236,7 +236,7 @@ nfltr-pipe dial [--relay-pin sha256] [--direct on|off] <address> | --address-fil
 HTTPS URL and certificate pin; nothing of an account is read), else
 `grpc.nfltr.xyz:443`; an error connecting names the relay and `--relay`.
 The address names it, so `dial` needs no relay flag. `--relay-pin`
-(`$NFLTR_RELAY_PIN`, else the saved relay's) accepts a private relay's
+(`$NFLTR_RELAY_CERT_SHA256`, else the saved relay's) accepts a private relay's
 certificate by its SHA-256 fingerprint. `--direct off` keeps the session
 relayed.
 

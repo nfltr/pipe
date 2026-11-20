@@ -189,8 +189,17 @@ nfltr-pipe: none is worked around here.
    nf1): 1 of 3 direct runs read `the server refused this address's
    secret` (`e2ee_client_refused`) where the README's table and "a second
    dial of the same address is reset" say 6. Reproducer:
-   `REL_CELLS='^one-session-direct$' REL_N=10`. Open: on the r25 modules
-   4 of 4 runs on a Mac (above).
+   `REL_CELLS='^one-session-direct$' REL_N=10`. On the r25 modules 4 of
+   4 runs on a Mac (above). Cause: the listener admits the second session
+   and resets it at once (one session per address); the reset can reach
+   the dialler before the verdict byte (Admitted), and the relay client's
+   `nf1.ClientTLS` read any failure of that read as the secret refused.
+   Fixed in the relay client (`land/V1READY`): only the stream's end with
+   no verdict is a refusal, a reset is the reset (6);
+   `TestResetBeforeVerdictIsNotARefusal` and Go mutant `reset-is-refusal`
+   there, `TestSecondDialIsReset` here (with an account's listener taking
+   direct paths it exited 10 in the check workflow on relay client
+   v0.23.8).
 
 4. **Relayed, an end exits 0 while its peer holds a prefix** (relay
    client `nfnet`, lane SENDONCE: send's defect 3, the same assumption).

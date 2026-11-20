@@ -1,6 +1,22 @@
 # Changelog
 
-## v0.1.2 (unreleased)
+## Unreleased
+
+- **A second dial of an address in use exits 6, not 10.** The second
+  dial could read the listener's reset as a refused secret (exit 10,
+  `e2ee_client_refused`); it now exits 6 (`reset`), as the exit table says
+  (relay client, nf1; [defect 3](docs/reliability.md#defects-found)).
+- **The contract of a 1.x release:** [docs/v1-contract.md](docs/v1-contract.md)
+  lists the commands, flags, environment variables, exit codes, the
+  address format and the compatibility rule; a test fails when the code
+  and it differ.
+- **`make cross-version`:** the previous release, downloaded from GitHub
+  and verified, against this checkout, both ways, relayed and direct, on
+  a private relay; in `make ci` and the check workflow.
+- The README names `--relay-pin`'s variable right: `$NFLTR_RELAY_CERT_SHA256`
+  (it said `$NFLTR_RELAY_PIN`, which nothing reads).
+
+## v0.1.2
 
 - **A direct session under loss no longer loses its tail.** On a slow,
   lossy direct path an end could exit 0 while the other end exited 6 with
