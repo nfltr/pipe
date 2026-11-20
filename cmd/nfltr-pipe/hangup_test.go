@@ -32,7 +32,7 @@ func TestHangupResets(t *testing.T) {
 				code <- listen(t.Context(), listenCfg(r, p.anon), nfnet.DirectOn, p.anon, stdio{rand.Reader, got, lw})
 			}()
 			addr := readAddr(t, lr)
-			go func() { _, _ = io.Copy(os.Stderr, lr) }()
+			go func(w io.Writer) { _, _ = io.Copy(w, lr) }(os.Stderr)
 			args := []string{"dial", addr}
 			if p.direct == nfnet.DirectOff {
 				args = []string{"dial", "--direct", "off", addr}

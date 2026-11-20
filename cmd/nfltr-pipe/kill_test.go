@@ -117,7 +117,7 @@ func TestKilledPeerIsTyped(t *testing.T) {
 			got := &counting{n: make(chan struct{})}
 			tg, _ := nfnet.ParseTarget(addr)
 			code := make(chan int, 1)
-			go func() { code <- dial(t.Context(), dialCfg(r), tg, p.direct, stdio{rand.Reader, got, os.Stderr}) }()
+			go func(sio stdio) { code <- dial(t.Context(), dialCfg(r), tg, p.direct, sio) }(stdio{rand.Reader, got, os.Stderr})
 			killWhenFlowing(t, cmd, got)
 			waitWithin(t, "dial", code, want, 90*time.Second)
 		})
@@ -130,13 +130,13 @@ func TestKilledPeerIsTyped(t *testing.T) {
 				code <- listen(t.Context(), listenCfg(r, p.anon), nfnet.DirectOn, p.anon, stdio{rand.Reader, got, lw})
 			}()
 			addr := readAddr(t, lr)
-			go func() { _, _ = io.Copy(os.Stderr, lr) }()
+			go func(w io.Writer) { _, _ = io.Copy(w, lr) }(os.Stderr)
 			direct := "on"
 			if p.direct == nfnet.DirectOff {
 				direct = "off"
 			}
 			cmd, er := child(t, r, "dial", "PIPE_ADDR="+addr, "PIPE_DIRECT="+direct)
-			go func() { _, _ = io.Copy(os.Stderr, er) }()
+			go func(w io.Writer) { _, _ = io.Copy(w, er) }(os.Stderr)
 			killWhenFlowing(t, cmd, got)
 			waitWithin(t, "listen", code, want, 90*time.Second)
 		})

@@ -100,7 +100,8 @@ func startListen(t *testing.T, ctx context.Context, r *relaycoretest.Relay, p pa
 		_ = lw.Close()
 	}()
 	addr := readAddr(t, lr)
-	go func() { _, _ = io.Copy(os.Stderr, lr) }()
+	stderr := os.Stderr // read here: stderrOf in a later test swaps it (-race)
+	go func() { _, _ = io.Copy(stderr, lr) }()
 	return addr, code
 }
 
@@ -123,7 +124,8 @@ func startDial(t *testing.T, ctx context.Context, r *relaycoretest.Relay, addr s
 		t.Fatal(err)
 	}
 	code := make(chan int, 1)
-	go func() { code <- dial(ctx, dialCfg(r), tg, mode, stdio{in, o, os.Stderr}) }()
+	sio := stdio{in, o, os.Stderr} // os.Stderr read here, not in the goroutine (stderrOf swaps it)
+	go func() { code <- dial(ctx, dialCfg(r), tg, mode, sio) }()
 	return code
 }
 
