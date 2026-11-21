@@ -1,6 +1,32 @@
 # Changelog
 
-## Unreleased
+## v0.1.5
+
+- **A listener whose machine was off past its certificate's life serves
+  again**: the expired certificate is renewed before the first connection
+  presents it (before: the relay refused it for good and `listen` exited
+  6). A refused machine's error is one line: no certificate dump, no relay
+  answer, `nfltr config login` named once; it no longer says `--relay
+  names another`.
+- **A machine certificate renews through a pinned private relay**: the
+  renewal trusts the relay certificate that `--cert-sha256` (else
+  `$NFLTR_RELAY_CERT_SHA256`) pins, as the sessions do; before, it used
+  the system roots only, a self-signed relay refused every renewal and
+  the certificate lapsed.
+- **Direct sessions on long, lossy paths**: the direct path's QUIC uses
+  BBR instead of NewReno (link quiclink v0.7.2). On a direct path
+  Helsinki to Singapore (260 ms, 0.03-0.06 % loss, 29 % of packets
+  reordered) a 10 GiB transfer ran at a steady 352-359 Mbit/s; before,
+  36-166 Mbit/s, falling to 15-59 (nfltr-send, the same transport). The
+  wire is unchanged.
+- **Hole punching**: the dialling end sends its first QUIC packet half a
+  relay round trip after the sync, once the other end's first probe has
+  opened its NAT (before: at the sync, and the first packet met a closed
+  NAT); an attempt that no candidate answered is followed by another, at
+  most three per round, before the session stays relayed; a round for a
+  session that has ended stops (relay client v0.24.1).
+- Built on link v0.13.3, relay client v0.24.1, relay proto v0.22.1 and
+  relay-core v0.19.1.
 
 From the v1.0 surface review ([docs/v1-surface-review.md](docs/v1-surface-review.md)).
 
@@ -8,10 +34,6 @@ From the v1.0 surface review ([docs/v1-surface-review.md](docs/v1-surface-review
   now dials relayed only (before: exit 1, "name the address"). After
   `--` every word is an argument.
 - A test keeps built binaries out of the repository.
-- **A listener whose machine was off past its certificate's life serves
-  again**: the expired certificate is renewed before the first connection
-  presents it (before: the relay refused it for good and `listen` exited
-  6). A refused machine's error no longer says `--relay names another`.
 - **`--relay-cert-sha256` is now `--cert-sha256`**, the name `nfltr config
   set-relay` and nfltr's `cat` commands use (one name in all three tools);
   `--relay-cert-sha256` is refused. `$NFLTR_RELAY_CERT_SHA256` is
