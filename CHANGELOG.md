@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **A machine certificate renews through a pinned private relay**: the
+  renewal now trusts the relay certificate `--cert-sha256` (else
+  `$NFLTR_RELAY_CERT_SHA256`, else the saved relay's) pins, as the
+  sessions do; before, it used the system roots only and a self-signed
+  relay refused every renewal and the certificate lapsed.
+
 From the v1.0 surface review ([docs/v1-surface-review.md](docs/v1-surface-review.md)).
 
 - **Flags may follow the address**: `nfltr-pipe dial nf1... --direct off`
