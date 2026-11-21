@@ -272,6 +272,7 @@ func listenCmd(ctx context.Context, args []string) int {
 		m = nil
 		fmt.Fprintln(os.Stderr, "no machine certificate: serving with no account, on direct paths only (a dial with no direct path exits 12; after `nfltr config login` the relay carries those)")
 	case err == nil:
+		m.pin = *cf.pin
 		if err = m.forRelay(cfg.AgentRelay); err != nil {
 			return fail(os.Stderr, 1, err)
 		}
