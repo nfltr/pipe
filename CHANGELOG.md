@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.1.6
+
+- **The direct path's transport of nfltr-send v0.1.11**, which made its
+  direct transfers faster on fast links for less CPU. The path switch's
+  send and receive buffers are rings, so an acknowledgement no longer
+  moves every unacknowledged byte to the front of its buffer (pathswitch
+  v0.1.4); on
+  Linux the direct path's QUIC reads datagrams in batches (UDP GRO), a
+  send batch holds up to 44 packets (was 14), and a connection queues up
+  to 4096 received packets (quiclink v0.7.4). Between two machines in
+  one cloud zone nfltr-send's 10 GiB direct transfer ran at 2.71 Gbit/s
+  on it, 1.54 before (nfltr-pipe was not measured).
+- **A closed session no longer leaves a write hanging**: a direct
+  session's write blocked on the peer's window returns an error once the
+  session is closed; before, it waited (quiclink v0.7.4).
+- The wire is unchanged from v0.1.5.
+- Built on link v0.13.3, pathswitch v0.1.4, quiclink v0.7.4, relay client
+  v0.24.4, relay proto v0.22.1 and relay-core v0.19.4.
+
 ## v0.1.5
 
 - **A listener whose machine was off past its certificate's life serves
