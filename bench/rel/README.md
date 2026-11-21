@@ -77,7 +77,7 @@ In `REL_OUT` (default `$TMPDIR/nfltr-pipe-rel-<time>`):
 ## Running it
 
 ```console
-$ make reliability                              # nfltr-pipe from this checkout, nfltr v2.1.73
+$ make reliability                              # nfltr-pipe from this checkout, nfltr v2.1.78
 $ make reliability NFLTR_VERSION=v2.1.74
 $ make reliability REL_BIN=/path/to/bins        # nfltr-pipe, nfltr, nfltr-relay
 $ make reliability REL_N=1 REL_CELLS='^kill-'   # a subset
