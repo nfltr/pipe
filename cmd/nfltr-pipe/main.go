@@ -586,8 +586,11 @@ func enrolHint(err error, anon bool) error {
 }
 
 // relayHint names the relay a connection was for and the flag that names
-// another.
+// another; a refused machine is enrolHint's (another relay is no fix).
 func relayHint(err error, relay string) error {
+	if nfnet.CodeOf(err) == nfnet.CodeAuth {
+		return fmt.Errorf("relay %s: %w", relay, err)
+	}
 	return fmt.Errorf("relay %s (--relay names another): %w", relay, err)
 }
 
