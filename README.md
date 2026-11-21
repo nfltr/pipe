@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.svg" width="96" alt="nfltr"></p>
+
 # nfltr-pipe
 
 Join two machines' stdin and stdout over one end to end encrypted
