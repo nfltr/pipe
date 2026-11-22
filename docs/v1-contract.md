@@ -123,6 +123,12 @@ previous release (`PIPE_PREV`, downloaded from its GitHub release, its
 signature and sum verified) against this checkout both ways on a private
 relay. Both ends need a relay that serves nf1 addresses (nfltr-relay
 `NF1_ENABLED`; `NF1_ANON_ENABLED` for listeners with no account).
+v0.1.7 was a hard cut on the direct path before 1.0: it took quiclink
+v0.8.0, which refuses a QUIC peer without ACK Frequency, so between
+v0.1.7 and an earlier end no direct path forms: a session of a listener
+with an account is carried relayed, and a dial of a listener with no
+account exits 12 (`direct_required`); `cross.sh` requires both against an
+earlier `PIPE_PREV`.
 
 Release files: `nfltr-pipe_<os>_<arch>` (`.exe` on Windows) for linux,
 darwin and windows on amd64 and arm64, `SHA256SUMS`, and

@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.1.7
+
+- **The direct path asks for fewer acknowledgements** (QUIC's ACK
+  Frequency extension, quiclink v0.8.0 on its QUIC fork v0.63.1-nfltr.7):
+  the receiving end acknowledges every 10 packets and only a packet more
+  than 10 places late at once, instead of an immediate ACK for every
+  reordered packet. On a simulated path that reorders 30 % of its packets,
+  0.39 -> 0.10 ACK packets per data packet at the same rate (the QUIC
+  library's test); nfltr-pipe was not measured, and the CPU this saves on
+  a real reordering path is not measured yet.
+- **Hard cut on the direct path: both ends need v0.1.7.** A QUIC peer
+  without ACK Frequency is refused, so between v0.1.7 and v0.1.6 or
+  earlier no direct path forms: a listener with an account carries the
+  session relayed (every byte, as before), and a dial of a listener with
+  no account exits 12 (`direct_required`). The relayed path is unchanged.
+- **A listener whose move to another relay replica failed moves when the
+  relay asks again**; before, it ignored the second ask and stayed where
+  the relay was rebalancing away from (relay client v0.24.5).
+- Built on link v0.13.3, pathswitch v0.1.4, quiclink v0.8.0, relay client
+  v0.24.5, relay proto v0.22.1 and relay-core v0.19.5.
+
 ## v0.1.6
 
 - **The direct path's transport of nfltr-send v0.1.11**, which made its

@@ -94,7 +94,7 @@ runs the previous release, `PIPE_PREV` in the Makefile (downloaded from its
 GitHub release by `fetch.sh`, `SHA256SUMS.sshsig` verified against
 `release/allowed_signers` and the binary against `SHA256SUMS`), against
 nfltr-pipe built from the checkout, on this harness's private relay, twice:
-the old one listens and the new one dials (`REL_PIPE_L`, `REL_PIPE_D`), then the reverse. Cells (`CROSS_CELLS`): `size-16m-both`, both half closes, a SIGTERM of each end, each relayed and direct, and `anon-direct`; `REL_N` runs each (default 1).
+the old one listens and the new one dials (`REL_PIPE_L`, `REL_PIPE_D`), then the reverse. Cells (`CROSS_CELLS`): `size-16m-both`, both half closes, a SIGTERM of each end, each relayed and direct, and, a run of its own (`CROSS_ANON_CELLS`), `anon-direct`; `REL_N` runs each (default 1). Against a `PIPE_PREV` before v0.1.7 (the direct path's ACK Frequency hard cut) a direct cell is carried relayed and `anon-direct` must exit 12 at the dialler (`REL_EXPECT_D`).
 Results in `REL_OUT/<first>-<second>/`. It exits 0 only when every run of
 both ways passed. A release moves `PIPE_PREV` to itself.
 

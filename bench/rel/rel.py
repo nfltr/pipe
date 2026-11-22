@@ -17,7 +17,8 @@ cells to run), REL_TIMEOUT (s per session, default 300), REL_LARGE (bytes
 each way of the large cells, default 1 GiB), REL_RSS_MB (an end's resident
 memory bound, default 160), REL_UID (owner of REL_OUT's files at the end), REL_PIPE_L and REL_PIPE_D (the
 listener's and the dialler's nfltr-pipe in REL_BIN, default nfltr-pipe: two
-versions, cross.sh)."""
+versions, cross.sh), REL_EXPECT_D (every cell's expected dialler exit code,
+the listener then not judged by its exit: cross.sh across a hard cut)."""
 import json, os, re, signal, statistics, subprocess as sp, sys, threading, time
 
 B = os.environ.get("REL_BIN", "/bin-in")
@@ -291,6 +292,8 @@ def run_cell(c, ld):
     relayed = c["path"] == "relayed"
     common = ["--direct", "off"] if relayed else []  # the pin: $NFLTR_RELAY_CERT_SHA256 (ENV), the same in every release
     want = {"l": c.get("expect_l", (0,)), "d": c.get("expect_d", (0,))}
+    if os.environ.get("REL_EXPECT_D"):
+        want = {"l": None, "d": (int(os.environ["REL_EXPECT_D"]),)}
     row = {"cell": c["name"], "bytes_l": nl, "bytes_d": nd, "fault": f or None}
     ends = []
     if c.get("noudp"):

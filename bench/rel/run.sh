@@ -25,7 +25,7 @@ if [ -z "${REL_BIN:-}" ]; then
 fi
 echo "results: $out"
 set -- -e REL_UID="$(id -u):$(id -g)"
-for v in REL_N REL_CELLS REL_TIMEOUT REL_LARGE REL_RSS_MB REL_PIPE_L REL_PIPE_D; do
+for v in REL_N REL_CELLS REL_TIMEOUT REL_LARGE REL_RSS_MB REL_PIPE_L REL_PIPE_D REL_EXPECT_D; do
 	eval "x=\${$v:-}"
 	[ -z "$x" ] || set -- "$@" -e "$v=$x"
 done
