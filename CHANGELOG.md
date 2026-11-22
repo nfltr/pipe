@@ -1,5 +1,52 @@
 # Changelog
 
+## v0.1.9
+
+- **One direct connection on a long path is no longer held at 0.35
+  Gbit/s.** A direct session's window now grows from 16 MiB to 64 MiB
+  while the reader keeps up (relay client v0.25.2, quiclink v0.10.0), and
+  the QUIC fork lets 65,536 packets be in flight (was 10,000, 14.5 MB)
+  with as many gaps in a stream (QUIC fork v0.63.1-nfltr.11). Measured
+  with nfltr-send on the candidate, Helsinki to Singapore (260 ms), 10 GiB
+  direct: 0.36 -> 0.99 Gbit/s with 1 connection, 1.20 -> 1.71 Gbit/s with
+  4; nfltr-pipe was not measured. A direct session can now hold more
+  memory: up to about 64 MiB in flight at the sending end and 160 MiB
+  buffered at the receiving end.
+- **Late packets are acknowledged, not sent again.** On a path with more
+  than 64 holes open at once, the receiving end's ACK dropped its lowest
+  ranges, so a packet arriving late below them was never acknowledged and
+  its sender declared it lost and resent it. An ACK now reports first the
+  ranges holding packets received since the last ACK. Measured with
+  nfltr-send on the candidate, Helsinki to Singapore, 4 connections: 0.8-
+  3.3 % of the packets resent -> about 0.01 %, 6 % less sender CPU per
+  GiB; nfltr-pipe was not measured.
+- **No drops in the sending host's own queue.** The QUIC fork asked a
+  7 MiB socket send buffer, so one connection queued about 5,000 packets
+  (40-55 ms) in the host before the network card, and Linux's default
+  qdisc (fq_codel) dropped whole batches of 44 packets; it now asks 256
+  KiB (a larger buffer the host gives is kept). Measured with nfltr-send
+  on the candidate, Helsinki to Singapore: with 4 connections 279 qdisc
+  drops per run -> 0 at the same rate, 7 % more sender CPU per GiB; with
+  1 connection and the larger windows 0.74 -> 1.25 Gbit/s.
+- **ACK processing no longer slows with the packets in flight.** The QUIC
+  fork's ACK and loss detection walked every packet in flight; they now
+  walk only the packets acknowledged or declared lost (the fork's
+  benchmark at 50,000 in flight: 2.5 -> 0.3 us per packet).
+- **A relayed session's window grows with the path** (link v0.14.0): it
+  doubles, up to 16 MiB per session and 64 MiB per connection, while its
+  sender waits for credit and its reader keeps up; before, a relayed
+  session moved one fixed window per round trip. It needs the relay on
+  link v0.14.0 or later too; with an older relay the windows stay fixed,
+  as before. Link's own benchmark (one session over 20 ms): a 1 MiB
+  window 44 -> 278 MB/s; nfltr-pipe was not measured.
+- pathswitch v0.1.5 reads each DATA payload in place, not through a frame
+  buffer.
+- Nothing changes on the wire between the two ends: v0.1.8 and v0.1.9
+  speak the same protocol.
+- Built on link v0.14.0, pathswitch v0.1.5, quiclink v0.10.0 (QUIC fork
+  v0.63.1-nfltr.11), relay client v0.25.2, relay proto v0.22.3 and
+  relay-core v0.19.8.
+
 ## v0.1.8
 
 - **A direct session uses less CPU.** On a direct path each byte is now
