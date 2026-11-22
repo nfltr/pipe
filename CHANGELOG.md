@@ -10,6 +10,9 @@
   0.39 -> 0.10 ACK packets per data packet at the same rate (the QUIC
   library's test); nfltr-pipe was not measured, and the CPU this saves on
   a real reordering path is not measured yet.
+  Measured on nfltr-send v0.1.12 after the release, on a real 260 ms
+  path (Helsinki to Singapore): it did not reduce acknowledgements; the
+  cause is being worked on.
 - **Hard cut on the direct path: both ends need v0.1.7.** A QUIC peer
   without ACK Frequency is refused, so between v0.1.7 and v0.1.6 or
   earlier no direct path forms: a listener with an account carries the
