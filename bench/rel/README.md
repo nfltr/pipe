@@ -38,6 +38,7 @@ through a reader the cell controls.
 | `reader-closes-<path>` | the dialler's stdout is closed after 1 MiB of 64 MiB (`\| head`): both exit 6 within 10 s |
 | `slow-reader-<path>`, `slow-reader-128m-<path>` | 32 MiB read at 4 MiB/s, 128 MiB at 8 MiB/s: both exit 0, and the peak memory does not follow the stream |
 | `drop-<s>s-<path>` | 64 MiB at 100 Mbit/s and 40 ms; at 30 % the link drops (100 % loss both ways): for 3 s both exit 0; for 10 s (about the relayed path's liveness bound) both exit 0 or both 6; for 60 s both exit 6 within 120 s |
+| `noroute-2s-<path>` | 1 MiB each way; the dialler's netns has no route to the relay (`unreachable`, connect fails "no route to host") for the dial's first 2 s: the dial asks again within its open bound, both exit 0 |
 | `relay-restart-<path>` | at 30 % the relay is killed and started again: relayed, both exit 6 within 60 s; on the direct path (the fault waits until the session runs there) the session does not need the relay and completes, both 0 |
 | `one-session-<path>` | while the session runs a second dial of the address must exit 6 and the first session complete; a dial after it must exit 3 |
 | `anon-direct` | a listener without a certificate (no account): direct only, 16 MiB each way |

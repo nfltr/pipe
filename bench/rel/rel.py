@@ -331,6 +331,10 @@ def run_cell(c, ld):
             dread = copy_reader(rate=f["rate"])
         if f.get("kind") == "close":
             dread = copy_reader(close_after=f["after"])
+        noroute = f"ip -n d route del unreachable {RELAY}/32"
+        if f.get("kind") == "noroute":  # the dialler's first connects to the relay: no route to host
+            sh(f"ip -n d route add unreachable {RELAY}/32")
+            threading.Timer(f["s"], sh, (noroute,), {"check": False}).start()
         t0 = time.time()
         D = dialler("dial", src["d"], out["d"], dfeed, dread)
         ends.append(D)
@@ -421,6 +425,8 @@ def run_cell(c, ld):
             e.wait(10)
         if c.get("noudp"):
             block_udp(False)
+        if f.get("kind") == "noroute":
+            sh(f"ip -n d route del unreachable {RELAY}/32", check=False)
         sh(f"rm -rf {run}")
 
 
@@ -483,6 +489,10 @@ def cells():
         # A 60 s drop outlasts the liveness: both ends exit 6.
         out.append(dict(f64, name=f"drop-60s-{path}", path=path, bound=120, expect_l=(6,), expect_d=(6,),
                         fault=dict(kind="drop", s=60, at=30)))
+        # The dialler finds no route to the relay for its first 2 s (a link coming back:
+        # its ARP entry still failed, lane PIPEEXIT5): the dial asks again within its
+        # open bound and the session completes, both 0.
+        out.append(dict(name=f"noroute-2s-{path}", l=MiB, d=MiB, path=path, fault=dict(kind="noroute", s=2)))
         # The relay is killed and restarted at 30 %: a relayed session is cut (both 6);
         # a session on the direct path does not need the relay and completes.
         rr = dict(expect_l=(6,), expect_d=(6,), bound=60) if path == "relayed" else {}
