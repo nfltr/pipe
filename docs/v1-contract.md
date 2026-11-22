@@ -128,7 +128,13 @@ v0.8.0, which refuses a QUIC peer without ACK Frequency, so between
 v0.1.7 and an earlier end no direct path forms: a session of a listener
 with an account is carried relayed, and a dial of a listener with no
 account exits 12 (`direct_required`); `cross.sh` requires both against an
-earlier `PIPE_PREV`.
+earlier `PIPE_PREV`. The release after v0.1.7 is the same kind of cut: its
+relay client frames an nf1 direct path over per-epoch channels (each byte
+sealed once; listener hint `d2`, nfltr
+`docs/decisions/direct-once-2026-11-22.md`), so against v0.1.7 a direct
+cell is carried relayed; to a listener with no account a newer dialler
+exits 12 at once, an older one 6 (its reset, carrying the listener's
+reason).
 
 Release files: `nfltr-pipe_<os>_<arch>` (`.exe` on Windows) for linux,
 darwin and windows on amd64 and arm64, `SHA256SUMS`, and
