@@ -3,8 +3,8 @@ module github.com/nfltr/pipe
 go 1.27.2
 
 require (
-	github.com/nfltr/relay-core v0.19.10
-	github.com/nfltr/relay/client v0.25.4
+	github.com/nfltr/relay-core v0.19.11
+	github.com/nfltr/relay/client v0.26.0
 	github.com/spf13/viper v1.21.0
 )
 
