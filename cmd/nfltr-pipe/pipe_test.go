@@ -229,6 +229,24 @@ func TestLocalFailureResets(t *testing.T) {
 	}
 }
 
+// A receiver that stops early (its stdout fails at the first write) while
+// the sender's whole stdin fits the session's credit and has ended: the
+// sender's writes and half close all succeed, yet it must not exit 0,
+// which promises the other end took every byte (README exit table).
+func TestReceiverStopsEarly(t *testing.T) {
+	for _, p := range paths {
+		t.Run(p.name, func(t *testing.T) {
+			r := testRelay(t)
+			da := newOut()
+			da.fail = errors.New("broken pipe")
+			addr, lc := startListen(t, t.Context(), r, p, bytes.NewReader(random(t, 256<<10)), newOut())
+			dc := startDial(t, t.Context(), r, addr, p.direct, bytes.NewReader(nil), da)
+			wait(t, "dial", dc, 6)
+			wait(t, "listen", lc, 6)
+		})
+	}
+}
+
 // A stopped end (SIGINT, SIGTERM) resets the session: both exit 6.
 func TestStoppedEndResets(t *testing.T) {
 	for _, p := range paths {

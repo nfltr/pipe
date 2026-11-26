@@ -61,6 +61,8 @@ other; nothing grows with the stream.
 | every byte, both ways, exactly, and exit 0 at both ends; a side with an empty stdin does not lose its peer's tail | `TestRoundTrip` (8 MiB/3 MiB, 16 MiB/0, 0/16 MiB, 1/1 bytes; direct and relayed) |
 | a half close keeps the other direction going | `TestHalfClose` |
 | a failed end resets: the other exits 6 and its stdout is not closed | `TestLocalFailureResets`, `TestStoppedEndResets` |
+| an end exits 0 only once its peer took every byte: a receiver that stops early, or a relayed tail its peer never got, is not 0 | `TestReceiverStopsEarly`, `TestRelayedEndDropAfterLastByte` |
+| memory does not grow with the stream: a stalled stdout holds the sender's stdin reads and the heap to a bound | `TestMemoryBoundedPerDirection` (128 MiB stdin; direct and relayed) |
 | a killed peer ends the other end typed, within the liveness bound | `TestKilledPeerIsTyped` (each end killed, each path) |
 | open failures are typed (12, 1, 3) | `TestOpenFailuresAreTyped` |
 | the code takes only the model's steps, in the model's order | `make spec-traces` |
