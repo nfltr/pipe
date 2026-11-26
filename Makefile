@@ -58,9 +58,8 @@ reliability:
 # GitHub release, signature and sums verified) against nfltr-pipe built
 # from this checkout, both ways, relayed and direct, on a private relay
 # (bench/rel/cross.sh; docs/v1-contract.md "Compatibility"); Linux with
-# docker, about 3 minutes. A check workflow job; not in make ci, whose
-# TMPDIR a CI runner's docker cannot mount (there: ci-request
-# TARGET=cross-version). A release moves PIPE_PREV to itself.
+# docker, about 3 minutes. A check workflow job; not in make ci. A release
+# moves PIPE_PREV to itself.
 PIPE_PREV ?= v0.1.7
 export PIPE_PREV
 cross-version:
