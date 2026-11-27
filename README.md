@@ -359,6 +359,8 @@ $ make release-dryrun # the release files in dist/, built twice and compared, si
 $ make reliability    # the reliability matrix (Linux, docker): docs/reliability.md
 ```
 
+`make check` also runs `scripts/check-dep-ports.sh` (a copy of nfltr's): only a dependency's adapter imports or names it (`scripts/dep-ports.txt`); today's exceptions are `scripts/dep-ports-allow.txt`, which may only shrink.
+
 A release is `make release`, `make release-sign` (the key in
 `~/.config/nfltr-pipe/release-signing-key`, or `SIGNING_KEY=<key>`),
 `make release-verify` (against `release/allowed_signers`) on a clean
