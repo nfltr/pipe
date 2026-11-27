@@ -4,7 +4,7 @@ go 1.27.2
 
 require (
 	github.com/nfltr/relay-core v0.20.1
-	github.com/nfltr/relay/client v0.27.1
+	github.com/nfltr/relay/client v0.27.2-0.20261127181936-1640cc0ba115
 	github.com/spf13/viper v1.21.0
 )
 
@@ -21,8 +21,8 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/jackpal/gateway v1.2.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/nfltr/link v0.14.0 // indirect
-	github.com/nfltr/link/pathswitch v0.1.5 // indirect
+	github.com/nfltr/link v0.14.1-0.20261127181840-ad520f28ad51 // indirect
+	github.com/nfltr/link/pathswitch v0.1.6-0.20261127181840-ad520f28ad51 // indirect
 	github.com/nfltr/link/peerlink/quiclink v0.10.0 // indirect
 	github.com/nfltr/quic-go v0.63.1-nfltr.11 // indirect
 	github.com/nfltr/relay/proto v0.23.0 // indirect
