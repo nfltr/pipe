@@ -246,6 +246,35 @@ nfltr-pipe: none is worked around here.
    (in `make check`): the listener exits 6, the dialler 6 with 3,997,696
    of 4,194,304 bytes.
 
+5. **An end exits 0 when its peer's program failed after its transport
+   took the whole stream** (link far end and `pathswitch`, relay client
+   `agent`; open, lane PIPERACE). `TestReceiverStopsEarly/relayed`
+   failed 4 of 200 on the Linux CI VM (relay client v0.27.0, relay-core
+   v0.20.0): the dialler's stdout failed at its first write, yet the
+   listener exited 0. The SDK acknowledges an end once the receiving
+   side's transport holds it, not once its program read it: link's far
+   end sends ENDACK as its receive loop takes the CLOSE (`mux.go`, "a far
+   end: received is taken"); on the direct path `pathswitch` acknowledges
+   END on receipt, its `Abort` of a session clean at the transport is the
+   clean end, and the agent's acked end (`agent/queue_close.go`
+   `ackedEnd`) waits for the data bytes only. When the whole stream and
+   its END fit the credit and arrive before the receiver's failure, the
+   sender's Close returns nil; otherwise the reset comes first and both
+   exit 6: scheduling, not what happened, picks the code. Against "Ends
+   that tell" and `spec/README.md`'s assumption that a clean Close returns
+   once the peer took the end. Reproducer
+   `TestReceiverStopsAfterArrival` (the receiver's failing write waits
+   300 ms): fails on both paths, 100 of 100 on the VM. The fix belongs to
+   the transport: an end is acknowledged once the far end's reader took
+   it (as quiclink's 'E' at Read's io.EOF already is). A prototype
+   (`~/nfltr-evidence/piperace/`) passes both reproducers but ends clean
+   relayed sessions at the 30 s idle bound: under end-to-end TLS the
+   reader stops at close_notify and never reads the link's END, so each
+   end's Close waits for the other's ENDACK. The fix needs link's
+   `spec/RelayedClose.tla`/`EndAckLeg.tla` and `pathswitch`'s
+   `DirectPath.tla` changed first, and `tlsend` to take the link's END
+   after close_notify.
+
 The matrix also found that a direct session's Close returned nil when the
 peer had not acknowledged the END (the session failed first): fixed in
 the relay client with defect 2 (`TestPSConnCloseReportsAnUnackedEnd`);
