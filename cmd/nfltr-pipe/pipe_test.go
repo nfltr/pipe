@@ -67,13 +67,15 @@ type out struct {
 	mu     sync.Mutex
 	b      bytes.Buffer
 	closed chan struct{}
-	fail   error // every write fails with it
+	fail   error         // every write fails with it
+	slow   time.Duration // a failing write fails only after this
 }
 
 func newOut() *out { return &out{closed: make(chan struct{})} }
 
 func (o *out) Write(p []byte) (int, error) {
 	if o.fail != nil {
+		time.Sleep(o.slow)
 		return 0, o.fail
 	}
 	o.mu.Lock()
@@ -239,6 +241,24 @@ func TestReceiverStopsEarly(t *testing.T) {
 			r := testRelay(t)
 			da := newOut()
 			da.fail = errors.New("broken pipe")
+			addr, lc := startListen(t, t.Context(), r, p, bytes.NewReader(random(t, 256<<10)), newOut())
+			dc := startDial(t, t.Context(), r, addr, p.direct, bytes.NewReader(nil), da)
+			wait(t, "dial", dc, 6)
+			wait(t, "listen", lc, 6)
+		})
+	}
+}
+
+// TestReceiverStopsEarly with the receiver's stdout failing only once the
+// whole stream and its end reached the receiver's side: its program
+// never took them, so the sender must not exit 0 either (the VM's
+// ordering of TestReceiverStopsEarly/relayed, lane PIPERACE).
+func TestReceiverStopsAfterArrival(t *testing.T) {
+	for _, p := range paths {
+		t.Run(p.name, func(t *testing.T) {
+			r := testRelay(t)
+			da := newOut()
+			da.fail, da.slow = errors.New("broken pipe"), 300*time.Millisecond
 			addr, lc := startListen(t, t.Context(), r, p, bytes.NewReader(random(t, 256<<10)), newOut())
 			dc := startDial(t, t.Context(), r, addr, p.direct, bytes.NewReader(nil), da)
 			wait(t, "dial", dc, 6)
