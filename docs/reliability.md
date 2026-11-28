@@ -248,7 +248,7 @@ nfltr-pipe: none is worked around here.
 
 5. **An end exits 0 when its peer's program failed after its transport
    took the whole stream** (link far end and `pathswitch`, relay client
-   `agent`; open, lane PIPERACE). `TestReceiverStopsEarly/relayed`
+   `agent`; lane PIPERACE). `TestReceiverStopsEarly/relayed`
    failed 4 of 200 on the Linux CI VM (relay client v0.27.0, relay-core
    v0.20.0): the dialler's stdout failed at its first write, yet the
    listener exited 0. The SDK acknowledges an end once the receiving
@@ -273,7 +273,13 @@ nfltr-pipe: none is worked around here.
    end's Close waits for the other's ENDACK. The fix needs link's
    `spec/RelayedClose.tla`/`EndAckLeg.tla` and `pathswitch`'s
    `DirectPath.tla` changed first, and `tlsend` to take the link's END
-   after close_notify.
+   after close_notify. Fixed in link v0.14.1 (pathswitch v0.1.6) and
+   relay client v0.28.1 (lanes ENDACK, ENDACKFIX; link
+   `spec/RelayedClose.tla`, `EndAckLeg.tla`, `DirectPath.tla`, relay
+   `spec/TLSEnd.tla`), round r86: a far end acknowledges the end once its
+   program read it (Read's io.EOF, or a Close with every byte read), so
+   the sender's Close is nil only then; `TestReceiverStopsAfterArrival`
+   passes on both paths (200 of 200 red on the VM before).
 
 The matrix also found that a direct session's Close returned nil when the
 peer had not acknowledged the END (the session failed first): fixed in
